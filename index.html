@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infection — NCLEX Study Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#EFF3F2; --card:#FFFFFF; --ink:#132320; --ink-soft:#4A5C58;
+  --rule:#D3DCD9; --rule-soft:#E4EAE8;
+  --right:#146B54; --right-bg:#E3F1EC;
+  --wrong:#9A3227; --wrong-bg:#F8E6E3;
+  --note:#54399B; --note-bg:#EDE8F8;
+  --flagc:#8A6100; --flag-bg:#FBF0D8;
+  --chip:#E6ECEA; --chip-on:#132320; --chip-on-ink:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#0F1615; --card:#18211F; --ink:#E7EDEB; --ink-soft:#9DAEAA;
+  --rule:#2C3A37; --rule-soft:#232E2C;
+  --right:#58C6A5; --right-bg:#123029;
+  --wrong:#E48B80; --wrong-bg:#33201D;
+  --note:#B9A3F0; --note-bg:#241C3B;
+  --flagc:#E0B64A; --flag-bg:#2E2512;
+  --chip:#232E2C; --chip-on:#E7EDEB; --chip-on-ink:#0F1615;
+}}
+:root[data-theme="dark"]{
+  --page:#0F1615; --card:#18211F; --ink:#E7EDEB; --ink-soft:#9DAEAA;
+  --rule:#2C3A37; --rule-soft:#232E2C;
+  --right:#58C6A5; --right-bg:#123029;
+  --wrong:#E48B80; --wrong-bg:#33201D;
+  --note:#B9A3F0; --note-bg:#241C3B;
+  --flagc:#E0B64A; --flag-bg:#2E2512;
+  --chip:#232E2C; --chip-on:#E7EDEB; --chip-on-ink:#0F1615;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.55}
+.wrap{max-width:52rem;margin:0 auto;padding:0 1.15rem 6rem}
+h1,h2,h3{font-family:"Newsreader",Georgia,serif;font-weight:500;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer}
+.hidden{display:none !important}
+
+/* masthead + mode tabs */
+header.top{padding:2.6rem 0 1.1rem}
+header.top h1{font-size:clamp(1.65rem,4.6vw,2.5rem);line-height:1.1;margin:0 0 .4rem;max-width:32ch}
+header.top p{margin:0;color:var(--ink-soft);font-size:.92rem;max-width:60ch}
+.modes{display:flex;gap:.3rem;border-bottom:1px solid var(--rule);margin-top:1.3rem}
+.mode{background:none;border:none;padding:.55rem .9rem;color:var(--ink-soft);font-size:.93rem;
+  font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.mode[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--right)}
+
+/* shared bits */
+.chips{display:flex;gap:.35rem;flex-wrap:wrap}
+.chip{background:var(--chip);color:var(--ink);border:none;border-radius:2rem;
+  padding:.3rem .72rem;font-size:.8rem;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink)}
+.btn{background:var(--ink);color:var(--card);border:none;border-radius:.4rem;
+  padding:.5rem 1.05rem;font-size:.9rem;font-weight:500}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.btn.small{padding:.3rem .7rem;font-size:.82rem}
+select,input[type=number]{font:inherit;font-size:.88rem;color:var(--ink);background:var(--card);
+  border:1px solid var(--rule);border-radius:.35rem;padding:.32rem .45rem}
+.toolbar{position:sticky;top:0;z-index:20;background:var(--page);border-bottom:1px solid var(--rule);
+  padding:.7rem 0;display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center}
+.toolbar label{font-size:.8rem;color:var(--ink-soft)}
+select.jump{max-width:min(21rem,100%)}
+.tally{margin-left:auto;font-size:.82rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.tally b{color:var(--ink);font-weight:600}
+
+/* question card */
+section.slide{padding-top:2.4rem}
+section.slide>h2{font-size:1.3rem;margin:0 0 .1rem}
+section.slide>.meta{font-size:.78rem;color:var(--ink-soft);margin:0 0 1rem}
+article.q{background:var(--card);border:1px solid var(--rule-soft);border-radius:.55rem;
+  padding:1.1rem 1.15rem 1.15rem;margin-bottom:.85rem}
+.qhead{display:flex;gap:.55rem;align-items:baseline;margin-bottom:.5rem;flex-wrap:wrap}
+.qnum{font-size:.78rem;font-weight:600;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.qtype{font-size:.7rem;font-weight:600;color:var(--ink-soft);border:1px solid var(--rule);
+  border-radius:.3rem;padding:.06rem .38rem}
+.qslide{font-size:.7rem;color:var(--ink-soft)}
+.stem{font-family:"Newsreader",Georgia,serif;font-size:1.09rem;line-height:1.45;margin:0 0 .8rem;max-width:64ch}
+ul.opts{list-style:none;margin:0 0 .8rem;padding:0;display:flex;flex-direction:column;gap:.3rem}
+.opt{display:flex;gap:.6rem;align-items:flex-start;width:100%;text-align:left;background:transparent;
+  border:1px solid var(--rule-soft);border-radius:.4rem;padding:.5rem .65rem;color:var(--ink);
+  font-size:.94rem;line-height:1.45}
+.opt:hover:not(:disabled){border-color:var(--rule)}
+.opt:focus-visible{outline:2px solid var(--right);outline-offset:1px}
+.opt .box{flex:none;width:1.15rem;height:1.15rem;margin-top:.12rem;border:1px solid var(--rule);
+  border-radius:.25rem;display:grid;place-items:center;font-size:.72rem;font-weight:600;color:var(--ink-soft)}
+.opt.round .box{border-radius:50%}
+.opt[aria-pressed="true"]{border-color:var(--ink);background:var(--chip)}
+.opt[aria-pressed="true"] .box{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.opt.correct{border-color:var(--right);background:var(--right-bg)}
+.opt.correct .box{background:var(--right);border-color:var(--right);color:var(--card)}
+.opt.missed{border-color:var(--right);border-style:dashed}
+.opt.incorrect{border-color:var(--wrong);background:var(--wrong-bg)}
+.opt.incorrect .box{background:var(--wrong);border-color:var(--wrong);color:var(--card)}
+.opt:disabled{cursor:default;opacity:1}
+.bank{border:1px dashed var(--rule);border-radius:.4rem;padding:.6rem .75rem;margin:0 0 .8rem;font-size:.9rem}
+.bank ol{margin:.25rem 0 0;padding-left:1.35rem}
+.bank .lbl{font-size:.78rem;color:var(--ink-soft)}
+.pairs{display:flex;flex-direction:column;gap:.45rem;margin:0 0 .8rem}
+.pair{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.pair .prompt{flex:1 1 12rem;font-size:.94rem}
+.pair .verdict{font-size:.82rem;font-weight:600}
+.pair.ok .verdict{color:var(--right)}
+.pair.no .verdict{color:var(--wrong)}
+.rat{margin-top:.8rem;border-top:1px solid var(--rule-soft);padding-top:.7rem;font-size:.92rem;
+  color:var(--ink-soft);max-width:66ch}
+.rat .ans{color:var(--ink);font-weight:600;display:block;margin-bottom:.2rem}
+.note{margin-top:.7rem;border-left:3px solid var(--note);background:var(--note-bg);
+  padding:.55rem .75rem;border-radius:0 .35rem .35rem 0;font-size:.88rem;max-width:66ch}
+.note .t{color:var(--note);font-weight:600}
+
+/* exam setup */
+.panel{background:var(--card);border:1px solid var(--rule-soft);border-radius:.55rem;
+  padding:1.15rem 1.2rem;margin:1.6rem 0}
+.panel h2{font-size:1.25rem;margin:0 0 .3rem}
+.panel .sub{color:var(--ink-soft);font-size:.9rem;margin:0 0 1.1rem;max-width:60ch}
+.field{margin-bottom:1.6rem}
+.field>.h,.panel>.h{font-size:1rem;font-weight:600;margin-bottom:.15rem}
+.panel>.h{margin:1.3rem 0 .2rem;font-size:.88rem}
+main>h2{font-size:1.4rem;margin:2.4rem 0 .15rem}
+.field>.d{font-size:.84rem;color:var(--ink-soft);margin-bottom:.6rem;max-width:58ch}
+.choices{display:flex;flex-direction:column;gap:.45rem}
+.choice{display:flex;gap:.7rem;align-items:flex-start;width:100%;text-align:left;
+  background:transparent;border:1px solid var(--rule);border-radius:.45rem;
+  padding:.7rem .85rem;color:var(--ink);font-size:.95rem}
+.choice:hover:not(:disabled){border-color:var(--ink-soft)}
+.choice:focus-visible{outline:2px solid var(--right);outline-offset:1px}
+.choice[aria-pressed="true"]{border-color:var(--right);background:var(--right-bg)}
+.choice .dot{flex:none;width:1.1rem;height:1.1rem;margin-top:.2rem;border-radius:50%;
+  border:1px solid var(--rule);display:grid;place-items:center}
+.choice[aria-pressed="true"] .dot{border-color:var(--right)}
+.choice[aria-pressed="true"] .dot::after{content:"";width:.55rem;height:.55rem;
+  border-radius:50%;background:var(--right)}
+.choice .t{font-weight:500}
+.choice .s{display:block;font-size:.83rem;color:var(--ink-soft);font-weight:400;margin-top:.1rem}
+.choice:disabled{opacity:.5;cursor:not-allowed}
+.picker{margin:.5rem 0 .1rem 1.8rem}
+.picker select{max-width:min(26rem,100%);width:100%}
+.sizes{display:flex;gap:.4rem;flex-wrap:wrap}
+.size{flex:1 1 4.5rem;min-width:4rem;background:transparent;border:1px solid var(--rule);
+  border-radius:.45rem;padding:.65rem .4rem;text-align:center;font-weight:500;color:var(--ink);font-size:.95rem}
+.size:hover:not([aria-pressed="true"]){border-color:var(--ink-soft)}
+.size[aria-pressed="true"]{border-color:var(--right);background:var(--right-bg);color:var(--right)}
+label.cb{display:flex;gap:.5rem;align-items:flex-start;font-size:.9rem;margin:.35rem 0}
+input[type=checkbox]{margin:.28rem 0 0;accent-color:var(--right);width:1rem;height:1rem;flex:none}
+details.more{margin-top:.4rem;border-top:1px solid var(--rule-soft);padding-top:.9rem}
+details.more summary{font-size:.86rem;color:var(--ink-soft);cursor:pointer;width:fit-content}
+details.more[open] summary{margin-bottom:.7rem}
+.startbar{border-top:1px solid var(--rule);margin-top:1.3rem;padding-top:1.1rem}
+.startbar .btn{padding:.6rem 1.5rem;font-size:.95rem}
+.poolinfo{font-size:.85rem;color:var(--ink-soft);margin-top:.6rem;max-width:56ch}
+.poolinfo b{color:var(--ink)}
+.warn{color:var(--flagc);font-size:.84rem;background:var(--flag-bg);border-radius:.35rem;
+  padding:.45rem .65rem;margin-top:.6rem;max-width:56ch}
+.poolbar{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1.2rem}
+
+/* exam runner */
+.examtop{position:sticky;top:0;z-index:20;background:var(--page);border-bottom:1px solid var(--rule);
+  padding:.65rem 0;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.prog{flex:1 1 8rem;height:.32rem;background:var(--rule-soft);border-radius:2rem;overflow:hidden;min-width:6rem}
+.prog i{display:block;height:100%;background:var(--right);width:0}
+.examtop .pos{font-size:.84rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.timer{font-size:.84rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.navgrid{display:flex;flex-wrap:wrap;gap:.25rem;margin:1.2rem 0}
+.navbtn{width:2rem;height:2rem;border:1px solid var(--rule);background:var(--card);border-radius:.3rem;
+  font-size:.76rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;padding:0}
+.navbtn.done{background:var(--chip);color:var(--ink);border-color:var(--rule)}
+.navbtn.flag{border-color:var(--flagc);color:var(--flagc)}
+.navbtn.here{outline:2px solid var(--right);outline-offset:1px}
+.navbtn.ok{background:var(--right-bg);border-color:var(--right);color:var(--right)}
+.navbtn.bad{background:var(--wrong-bg);border-color:var(--wrong);color:var(--wrong)}
+.runnav{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
+.runnav .sp{margin-left:auto}
+
+/* results */
+.scorebig{font-family:"Newsreader",Georgia,serif;font-size:3.4rem;line-height:1;margin:.2rem 0 .1rem}
+.scoresub{color:var(--ink-soft);font-size:.95rem;margin-bottom:1.2rem}
+table.bd{width:100%;border-collapse:collapse;font-size:.88rem;margin:.4rem 0 0}
+table.bd th,table.bd td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--rule-soft)}
+table.bd th{font-size:.78rem;color:var(--ink-soft);font-weight:600}
+table.bd td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.gridwrap{overflow-x:auto;margin:.6rem 0}
+table.matrix{border-collapse:collapse;width:100%;font-size:.92rem}
+table.matrix th,table.matrix td{border:1px solid var(--rule);padding:.4rem .55rem}
+table.matrix th{font-size:.82rem;color:var(--ink-soft);font-weight:600;text-align:left}
+table.matrix th.col{text-align:center;width:8.5rem}
+table.matrix td.rowlab{text-align:left}
+table.matrix td.cell{text-align:center}
+.gbox{width:1.6rem;height:1.6rem;line-height:1;border:1px solid var(--rule);border-radius:.25rem;
+  background:var(--card);color:var(--ink);font-size:.95rem;cursor:pointer;padding:0}
+.gbox.on{border-color:var(--ink);background:var(--chip);font-weight:700}
+.gbox.correct{background:var(--right-bg);border-color:var(--right);color:var(--right)}
+.gbox.missed{background:var(--card);border-color:var(--right);color:var(--right);border-style:dashed}
+.gbox.incorrect{background:var(--wrong-bg);border-color:var(--wrong);color:var(--wrong)}
+.gbox:disabled{cursor:default}
+.glossary{margin-top:.6rem}
+.gentry{padding:.6rem 0;border-bottom:1px solid var(--rule-soft)}
+.gterm{font-weight:650;font-size:.98rem}
+.gdef{color:var(--ink-soft);font-size:.92rem;margin-top:.15rem;max-width:68ch}
+.toolbar input[type=search]{font:inherit;padding:.35rem .5rem;border:1px solid var(--rule);
+  border-radius:.4rem;background:var(--card);color:var(--ink);min-width:14rem}
+p.lede{max-width:70ch}
+footer.end{margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--rule);
+  font-size:.84rem;color:var(--ink-soft);max-width:62ch}
+footer.end button{background:none;border:none;color:var(--ink-soft);text-decoration:underline;
+  padding:0;font-size:inherit}
+@media (prefers-reduced-motion: no-preference){
+  .rat,.note{animation:rise .2s ease-out}
+  @keyframes rise{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  .prog i{transition:width .25s ease}
+}
+@media (max-width:30rem){
+  .tally{margin-left:0;width:100%}
+  .stem{font-size:1.04rem}
+  .scorebig{font-size:2.8rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Infection</h1>
+  <p><b id="total"></b> questions built from the Infection lecture, as multiple choice, select all that apply, matching and matrix grid. Study by section, build yourself a custom exam, or drill the chain of infection and the antimicrobials.</p>
+  <div class="modes" role="tablist">
+    <button class="mode" role="tab" data-mode="study" aria-selected="true">Study by section</button>
+    <button class="mode" role="tab" data-mode="exam" aria-selected="false">Take a practice exam</button>
+    <button class="mode" role="tab" data-mode="terms" aria-selected="false">Chain of infection</button>
+    <button class="mode" role="tab" data-mode="dims" aria-selected="false">Antimicrobials</button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="end">
+  Built from the <em>Infection</em> lecture slides and speaker notes.
+  Your exam history is saved in this browser only &mdash; nothing is uploaded, and each person using this
+  link has their own separate history. <button id="wipe">Clear my history</button>
+</footer>
+
+</div>
+<script>
+const QUESTIONS = [{"s": 1, "t": "mc", "q": "What is an infection?", "o": ["Any growth of microorganisms on the surface of the body", "The invasion of body tissues by microorganisms with the potential to cause illness or disease", "The body's inflammatory response to injured or damaged tissue", "The presence of microorganisms that live on the body without causing harm"], "a": [1], "r": "An infection is the invasion of body tissues by microorganisms with the potential to cause illness or disease.", "id": "s1-1"}, {"s": 1, "t": "mc", "q": "A microorganism is living on a client's skin and causing no harm. Is this an infection?", "o": ["Yes, any microorganism living on the body counts as an infection of that tissue", "No, infection requires invasion of body tissues with the potential to cause illness", "Yes, because the skin is a body tissue and the organism is in contact with it", "No, because only bacteria and viruses are capable of causing a true infection"], "a": [1], "r": "Infection is the invasion of body tissues by microorganisms with the potential to cause illness or disease. Microorganisms living on the body without causing disease are normal flora.", "id": "s1-2"}, {"s": 2, "t": "sata", "q": "Which concepts are connected to infection, according to the lecture? Select all that apply.", "o": ["Inflammation", "Elimination", "Tissue integrity", "Sexuality", "Oxygenation", "Thermoregulation"], "a": [0, 1, 2, 3, 4], "r": "The related concepts are inflammation, elimination, tissue integrity, sexuality, oxygenation, and teaching and learning.", "id": "s2-1"}, {"s": 2, "t": "mc", "q": "A client with a GI infection develops diarrhea. Which connection explains this?", "o": ["Infection increases inflammation, which causes the diarrhea", "Infection damages the intestines and decreases absorption, so stool stays watery", "Infection raises the metabolic rate, which speeds up the bowel", "Infection depletes normal flora, which slows peristalsis"], "a": [1], "r": "Elimination connects to infection: a GI infection increases damage to the intestines and decreases absorption, which leads to diarrhea. UTIs and yeast infections can also cause painful or frequent urination.", "id": "s2-2"}, {"s": 2, "t": "mc", "q": "A client's wound becomes infected and the area is painful, swollen and red. Which connection does this show?", "o": ["Elimination, because drainage from the wound increases with infection", "Inflammation, because increased infection leads to increased inflammation", "Oxygenation, because infected tissue requires more oxygen to heal itself", "Tissue integrity, because the wound is no longer healing as expected"], "a": [1], "r": "Inflammation connects to infection: increased infection leads to increased inflammation, including pain, swelling and erythema.", "id": "s2-3"}, {"s": 2, "t": "mc", "q": "A client reports having multiple sexual partners. Which connection makes this relevant to infection?", "o": ["Elimination, because of the risk of a urinary tract infection", "Sexuality, because multiple partners increase the risk for STIs", "Teaching and learning, because the client needs education", "Inflammation, because of the risk of pelvic inflammation"], "a": [1], "r": "Sexuality connects to infection: multiple sexual partners increases the risk for sexually transmitted infections.", "id": "s2-4"}, {"s": 2, "t": "mc", "q": "A client has a pressure injury on the sacrum. Which connection explains why this raises infection risk?", "o": ["Elimination, because of contamination from stool and urine at that site", "Tissue integrity, because poor tissue integrity increases the risk for infection", "Oxygenation, because the tissue over the sacrum is poorly perfused", "Inflammation, because the wound bed is already inflamed and reddened"], "a": [1], "r": "Tissue integrity connects to infection: poor tissue integrity increases the risk for infection.", "id": "s2-5"}, {"s": 2, "t": "mc", "q": "A client with pneumonia has thick secretions and a falling oxygen saturation. Which connection does this show?", "o": ["Inflammation, because the alveoli become inflamed and swollen during infection", "Oxygenation, because secretions increase during a lung infection and impair oxygenation", "Elimination, because the secretions must be expelled from the body by coughing", "Tissue integrity, because the lung tissue has been damaged by the organism"], "a": [1], "r": "Oxygenation connects to infection: during a lung infection secretions increase, which can impair oxygenation.", "id": "s2-6"}, {"s": 2, "t": "mc", "q": "A nurse teaches a client about hand hygiene before discharge. Which connection does this show?", "o": ["Tissue integrity, because clean hands protect the skin from breakdown", "Teaching and learning, because teaching habits that prevent infection decreases risk", "Inflammation, because good hand hygiene reduces the inflammatory response", "Sexuality, because hygiene reduces the risk of sexually transmitted infection"], "a": [1], "r": "Teaching and learning connects to infection: teaching a client about habits to prevent infection, such as hand hygiene, decreases the risk of infection.", "id": "s2-7"}, {"s": 3, "t": "mc", "q": "What is normal flora?", "o": ["Microorganisms that invade tissue and cause disease", "Microorganisms that live on and within the body without causing disease", "Microorganisms that only appear after antibiotic therapy", "Microorganisms found in the environment but not on the body"], "a": [1], "r": "Normal flora are microorganisms that live on and within the body without causing disease. Enteric bacteria in the intestines produce vitamin K, and others produce substances that repress the growth of other microorganisms.", "id": "s3-1"}, {"s": 3, "t": "mc", "q": "What useful job do the enteric bacteria in the intestines perform?", "o": ["They break down dietary fiber", "They produce vitamin K", "They absorb water from stool", "They neutralize stomach acid"], "a": [1], "r": "Enteric bacteria, the bacteria that reside in the intestines, produce vitamin K. This is an example of normal flora performing an essential function.", "id": "s3-2"}, {"s": 3, "t": "mc", "q": "Besides their own functions, how does normal flora help prevent infection?", "o": ["By strengthening the immune system's response to an introduced antigen", "By producing substances that repress the growth of other microorganisms", "By thickening the mucous membranes so pathogens cannot penetrate them", "By raising the pH of body surfaces above the range bacteria tolerate"], "a": [1], "r": "Some normal flora produce substances that repress the growth of other microorganisms, which helps prevent infection.", "id": "s3-3"}, {"s": 3, "t": "mc", "q": "What is resident flora?", "o": ["Microorganisms that live only in the environment and never colonize the body", "Microorganisms normal to one part of the body that cause infection in another part", "Microorganisms acquired during a hospital stay rather than in the community", "Microorganisms that have become resistant to the antibiotics used against them"], "a": [1], "r": "Some microorganisms are normal resident flora of one part of the body but will cause infection in another part. Escherichia coli found in the large intestines is a common cause of UTI.", "id": "s3-4"}, {"s": 3, "t": "mc", "q": "When does disease occur?", "o": ["When any microorganism enters the body through a portal of entry", "When microbes produce a detectable alteration in normal tissue function", "When the immune system fails to recognize an antigen that has been introduced", "When the normal flora of the body are destroyed by a course of antibiotics"], "a": [1], "r": "Disease occurs when microbes produce a detectable alteration in normal tissue function.", "id": "s3-5"}, {"s": 3, "t": "mc", "q": "What is an infectious disease?", "o": ["A disease that is always contagious and passes readily between people", "A disease or infection caused by a microorganism, which may or may not be communicable", "A disease caused only by bacteria or viruses, and never by fungi or parasites", "A disease acquired in a healthcare facility rather than out in the community"], "a": [1], "r": "An infectious disease is a disease or infection caused by a microorganism. It may or may not be communicable.", "id": "s3-6"}, {"s": 3, "t": "mc", "q": "What is a communicable disease?", "o": ["Any disease at all that is caused by a microorganism entering the body", "An infectious disease that is contagious and can be transmitted from one source to another", "A disease that produces a detectable change in the function of normal tissue", "A disease caused by an opportunistic pathogen in an immunocompromised host"], "a": [1], "r": "A communicable disease is an infectious disease that is contagious and which can be transmitted from one source to another by an infectious organism.", "id": "s3-7"}, {"s": 3, "t": "mc", "q": "Tetanus is caused by Clostridium tetani found in the environment, but a person with tetanus cannot give it to another person. How is tetanus classified?", "o": ["Communicable but not infectious", "Infectious but not communicable", "Both infectious and communicable", "Neither infectious nor communicable"], "a": [1], "r": "Tetanus is an infectious disease caused by the bacteria Clostridium tetani found in the environment, but it is not communicable because it cannot be passed from person to person.", "id": "s3-8"}, {"s": 3, "t": "mc", "q": "What is a pathogen?", "o": ["Any microorganism found on the body", "A microorganism that causes disease", "A microorganism that lives in the environment", "A microorganism resistant to antibiotics"], "a": [1], "r": "A pathogen is a microorganism that causes disease, such as a bacteria or a virus.", "id": "s3-9"}, {"s": 3, "t": "mc", "q": "What is virulence?", "o": ["The number of microorganisms needed to cause infection", "The severity of disease the pathogen produces and its degree of communicability", "The ability of a pathogen to resist antibiotic therapy", "The length of time a pathogen can survive outside the body"], "a": [1], "r": "Virulence is the severity of disease the pathogen produces and its degree of communicability. The common cold virus is more virulent than the bacillus that causes leprosy.", "id": "s3-10"}, {"s": 3, "t": "mc", "q": "What is an opportunistic pathogen?", "o": ["A pathogen that causes disease only in healthy people with an intact immune system", "A microbe that usually does not cause disease in healthy people but may become virulent in those who are immunocompromised", "A pathogen that has developed resistance to the common antibiotics used to treat it", "A microbe that lives only in the environment and is unable to colonize the human body"], "a": [1], "r": "Opportunistic pathogens are microbes that usually do not cause disease in healthy people, but may become virulent with immunocompromised and unhealthy individuals.", "id": "s3-11"}, {"s": 3, "t": "mc", "q": "Why does Clostridium difficile become infectious after a course of antibiotics?", "o": ["Antibiotics make C. difficile more virulent than it was before treatment", "Antibiotics kill off other good bacteria, giving C. difficile the opportunity to overgrow", "Antibiotics damage the intestinal wall, allowing the organism to invade it", "Antibiotics act as a reservoir in which C. difficile spores can survive"], "a": [1], "r": "C. difficile is part of the normal flora of our intestines, but if someone is on antibiotics that kill off other good bacteria in the intestines, C. diff has the opportunity to overgrow and become infectious. It is the lecture's example of an opportunistic pathogen.", "id": "s3-12"}, {"s": 3, "t": "match", "q": "Match each term to its meaning.", "p": [["Normal flora", "Live on and within the body without causing disease"], ["Pathogen", "A microorganism that causes disease"], ["Virulence", "The severity of disease produced and its communicability"], ["Opportunistic pathogen", "Harmless in health, virulent in the immunocompromised"], ["Communicable disease", "An infectious disease that can be passed between sources"]], "r": "Normal flora live on and within the body without causing disease. A pathogen causes disease. Virulence is severity plus communicability. An opportunistic pathogen turns virulent in the immunocompromised. A communicable disease is an infectious disease that is contagious.", "id": "s3-13"}, {"s": 4, "t": "mc", "q": "Which is the most common infecting microorganism?", "o": ["Viruses", "Bacteria", "Fungi", "Parasites"], "a": [1], "r": "Bacteria are the most common infecting microorganism. Examples include Clostridium difficile and the streptococcus bacteria that cause strep throat.", "id": "s4-1"}, {"s": 4, "t": "sata", "q": "Which are examples of bacterial infections? Select all that apply.", "o": ["Clostridium difficile", "Staphylococcus aureus", "Streptococcus pyogenes, which causes strep throat", "Rhinovirus, which causes the common cold", "Candida albicans, which causes a yeast infection"], "a": [0, 1, 2], "r": "The bacteria listed are Clostridium difficile (C. diff), Staphylococcus aureus and Streptococcus pyogenes, which causes strep throat.", "id": "s4-2"}, {"s": 4, "t": "mc", "q": "What must a virus do in order to reproduce?", "o": ["Find a moist surface on the body", "Enter living cells", "Form spores in the environment", "Attach to another microorganism"], "a": [1], "r": "Viruses must enter living cells to reproduce. Examples are rhinovirus, which causes the common cold, and coronavirus, which causes COVID-19.", "id": "s4-3"}, {"s": 4, "t": "sata", "q": "Which are examples of viral infections? Select all that apply.", "o": ["Rhinovirus, which causes the common cold", "Coronavirus", "Respiratory syncytial virus (RSV)", "Tinea corporis, which causes ringworm", "Toxoplasma gondii, which causes toxoplasmosis"], "a": [0, 1, 2], "r": "The viruses listed are rhinovirus (the common cold), coronavirus (COVID-19) and respiratory syncytial virus (RSV).", "id": "s4-4"}, {"s": 4, "t": "sata", "q": "Which are examples of fungal infections? Select all that apply.", "o": ["Candida albicans, which causes a yeast infection", "Tinea corporis, which causes ringworm", "Tinea pedis, which causes athlete's foot", "Plasmodium, which causes malaria", "Streptococcus pyogenes, which causes strep throat"], "a": [0, 1, 2], "r": "The fungi listed are Candida albicans (yeast infection), Tinea corporis (ringworm) and Tinea pedis (athlete's foot).", "id": "s4-5"}, {"s": 4, "t": "sata", "q": "Which are examples of parasitic infections? Select all that apply.", "o": ["Plasmodium parasites, which cause malaria", "Toxoplasma gondii, which causes toxoplasmosis", "Tapeworms", "Ticks", "Coronavirus", "Candida albicans"], "a": [0, 1, 2, 3], "r": "The parasites listed are Plasmodium parasites (malaria), Toxoplasma gondii (toxoplasmosis), tapeworms and ticks. Fleas, worms and protozoa are also parasites.", "id": "s4-6"}, {"s": 4, "t": "match", "q": "Match each category of microorganism to its description.", "p": [["Bacteria", "The most common infecting microorganism"], ["Viruses", "Must enter living cells to reproduce"], ["Fungi", "Yeasts and molds"], ["Parasites", "Live on other organisms"]], "r": "Bacteria are the most common infecting microorganism, viruses must enter living cells to reproduce, fungi are yeasts and molds, and parasites live on other organisms.", "id": "s4-7"}, {"s": 5, "t": "mc", "q": "What defines an acute infection?", "o": ["It develops slowly and persists for months", "It appears suddenly and lasts a short time", "It is confined to one part of the body", "It spreads throughout the whole body"], "a": [1], "r": "Acute infections appear suddenly and last a short time. Influenza and pneumonia are the examples given.", "id": "s5-1"}, {"s": 5, "t": "mc", "q": "What defines a chronic infection?", "o": ["It appears suddenly and resolves quickly", "It develops slowly and persists for months or years", "It affects the entire body at once", "It only occurs in immunocompromised people"], "a": [1], "r": "Chronic infections develop slowly and/or persist for months or years. HIV/AIDS and hepatitis C are the examples given.", "id": "s5-2"}, {"s": 5, "t": "sata", "q": "Which are examples of acute infections? Select all that apply.", "o": ["Influenza", "Pneumonia", "HIV/AIDS", "Hepatitis C", "Tuberculosis"], "a": [0, 1], "r": "The acute infection examples given are influenza and pneumonia. HIV/AIDS and hepatitis C are chronic.", "id": "s5-3"}, {"s": 5, "t": "sata", "q": "Which are examples of chronic infections? Select all that apply.", "o": ["HIV/AIDS", "Hepatitis C", "Influenza", "Pneumonia", "Strep throat"], "a": [0, 1], "r": "The chronic infection examples given are HIV/AIDS and hepatitis C.", "id": "s5-4"}, {"s": 5, "t": "mc", "q": "How does hepatitis C spread, and why can it go undetected for years?", "o": ["Through respiratory droplets, because symptoms are mild", "Through contaminated blood, because many people are asymptomatic", "Through contaminated food, because the incubation is long", "Through direct skin contact, because the rash is subtle"], "a": [1], "r": "Hepatitis C is a viral infection that causes liver inflammation, sometimes leading to serious liver damage. It spreads through contaminated blood and can go undetected for years because many people are asymptomatic.", "id": "s5-5"}, {"s": 6, "t": "mc", "q": "What is a local infection?", "o": ["An infection that spreads through the bloodstream to distant parts of the body", "An infection limited to the specific part of the body where the microorganism remains", "An infection that affects multiple body systems at the same time", "An infection that lasts only a short time and then resolves on its own"], "a": [1], "r": "A local infection is limited to the specific part of the body where the microorganism remains. It is confined to a small area, typically near the portal of entry.", "id": "s6-1"}, {"s": 6, "t": "mc", "q": "What is a systemic infection?", "o": ["An infection that stays confined to a small area near the portal of entry", "An infection that spreads and affects the entire body and different systems", "An infection caused by the body's own normal flora rather than an outside agent", "An infection that resolves without any treatment once defenses respond"], "a": [1], "r": "A systemic infection spreads and affects the entire body and different systems. It is described as disseminated throughout the body.", "id": "s6-2"}, {"s": 6, "t": "sata", "q": "Which signs do localized infections generally demonstrate? Select all that apply.", "o": ["Redness", "Swelling", "Warmth", "Pain", "Purulent drainage", "Widespread rash"], "a": [0, 1, 2, 3, 4], "r": "Localized infections generally demonstrate signs of inflammation such as redness, swelling, warmth, pain and purulent drainage. Fever is sometimes seen, since it is one of the body's ways of eradicating the organism.", "id": "s6-3"}, {"s": 6, "t": "sata", "q": "Which are examples of local infections? Select all that apply.", "o": ["Otitis media, an ear infection", "A urinary tract infection", "Appendicitis", "Influenza", "Malaria", "HIV/AIDS"], "a": [0, 1, 2], "r": "The local infection examples given are otitis media (ear infection), UTI and appendicitis. Influenza, malaria and HIV/AIDS are systemic.", "id": "s6-4"}, {"s": 6, "t": "sata", "q": "Which are examples of systemic infections? Select all that apply.", "o": ["Influenza", "Malaria", "HIV/AIDS", "Otitis media", "Appendicitis"], "a": [0, 1, 2], "r": "The systemic infection examples given are influenza, malaria and HIV/AIDS.", "id": "s6-5"}, {"s": 6, "t": "mc", "q": "How can a local infection such as a UTI become systemic?", "o": ["By spreading along the mucous membranes", "By disseminating through the body through the bloodstream", "By being transmitted to another person", "By becoming resistant to antibiotics"], "a": [1], "r": "Local infections such as a UTI can disseminate through the body through the bloodstream and cause a systemic infection. If severe enough it can turn into sepsis or septic shock.", "id": "s6-6"}, {"s": 6, "t": "mc", "q": "What is sepsis or septic shock?", "o": ["A local inflammatory response with purulent drainage confined to one site", "A systemic inflammatory response that can lead to widespread inflammation, blood clotting and organ failure", "An infection that develops slowly and persists for many months or years", "An infection acquired in a healthcare facility more than 48 hours after admission"], "a": [1], "r": "Sepsis/septic shock is a systemic inflammatory response that can lead to widespread inflammation, blood clotting, organ failure, tachycardia, hypotension and decreased cardiac output.", "id": "s6-7"}, {"s": 7, "t": "mc", "q": "Which body defense is the specific defense?", "o": ["Intact skin and mucous membranes", "The immune system", "The inflammatory response", "The nasal passages"], "a": [1], "r": "The immune system is the specific defense. The body goes through a specific cascade of events when an antigen is introduced in order to create immunity for that individual.", "id": "s7-1"}, {"s": 7, "t": "mc", "q": "How do intact skin and mucous membranes defend against infection?", "o": ["By producing antibodies at the surface that neutralize bacteria on contact", "By acting as effective barriers unless they become cracked and broken", "By trapping microorganisms in cilia that sweep them away from the tissue", "By shedding epithelium continuously so colonizing organisms are removed"], "a": [1], "r": "Unless the skin and mucosa become cracked and broken, they act as effective barriers against bacteria. Fungi can live on the skin but cannot penetrate it.", "id": "s7-2"}, {"s": 7, "t": "mc", "q": "How do the nasal passages defend against infection?", "o": ["A low, acidic pH kills microorganisms as the air passes over the mucosa", "Moist mucous membranes and cilia trap microorganisms, dust and foreign material", "Large phagocytes ingest microorganisms and foreign particles as air passes", "Secretions continually wash microorganisms away before they reach the lungs"], "a": [1], "r": "As entering air follows the tortuous route of the nasal passages, it comes in contact with moist mucous membranes and cilia. These structures trap microorganisms, dust and foreign materials.", "id": "s7-3"}, {"s": 7, "t": "mc", "q": "How do the lungs defend against infection?", "o": ["Cilia sweep microorganisms upward and out", "Alveolar macrophages ingest microorganisms and foreign particles", "Surfactant dissolves the cell walls of bacteria", "The low pH of the alveoli inhibits bacterial growth"], "a": [1], "r": "The lungs have alveolar macrophages, which are large phagocytes, that ingest microorganisms, other cells and foreign particles.", "id": "s7-4"}, {"s": 7, "t": "sata", "q": "How does the oral cavity defend against infection? Select all that apply.", "o": ["It regularly sheds mucosal epithelium to rid the mouth of colonizers", "Saliva flows and has a partial buffering action", "Saliva contains enzymes and antibodies that fight microorganisms", "It maintains a strongly acidic pH", "It contains alveolar macrophages"], "a": [0, 1, 2], "r": "The oral cavity regularly sheds mucosal epithelium to rid the mouth of colonizers. The flow of saliva and its partial buffering action help prevent infections, and saliva contains enzymes and antibodies that fight and kill microorganisms.", "id": "s7-5"}, {"s": 7, "t": "mc", "q": "How is the eye protected from infection?", "o": ["By the thick corneal barrier, which organisms are unable to penetrate", "By tears, which wash microorganisms away and contain the enzyme lysozyme", "By macrophages in the conjunctiva that ingest microorganisms and particles", "By the acidic pH of the tear film, which inhibits most bacterial growth"], "a": [1], "r": "The eye is protected from infection by tears, which continually wash microorganisms away and contain the inhibiting enzyme lysozyme.", "id": "s7-6"}, {"s": 7, "t": "mc", "q": "How does the vagina defend against infection?", "o": ["Its high, alkaline pH kills most of the bacteria that reach the tissue", "Its low, acidic pH inhibits the growth of many disease-producing microorganisms", "Its secretions contain the enzyme lysozyme, which destroys bacterial walls", "Its mucosa sheds continuously, carrying colonizing organisms away with it"], "a": [1], "r": "When females reach puberty, lactobacilli ferment sugars in the vaginal secretions, creating an acidic vaginal pH. This low pH inhibits the growth of many disease-producing microorganisms.", "id": "s7-7"}, {"s": 7, "t": "mc", "q": "How does the urethra defend against infection?", "o": ["Its entrance is sterile and harbors no microorganisms of any kind", "Urine flow has a flushing and bacteriostatic action that keeps bacteria from ascending", "Its mucosa produces lysozyme, which destroys bacteria before they ascend", "Its low, acidic pH kills the Escherichia coli that reach it from the perineum"], "a": [1], "r": "The entrance to the urethra normally harbors many microorganisms, but the urine flow is believed to have a flushing and bacteriostatic action that keeps the bacteria from ascending the urethra.", "id": "s7-8"}, {"s": 7, "t": "sata", "q": "How does the gastrointestinal tract defend against infection? Select all that apply.", "o": ["The high acidity of the stomach prevents microbial growth", "The resident flora of the large intestine prevent disease-producing microorganisms from establishing", "Peristalsis moves microbes out of the body", "Bile dissolves bacterial cell walls", "Intestinal macrophages ingest microorganisms"], "a": [0, 1, 2], "r": "The high acidity of the stomach normally prevents microbial growth, the resident flora of the large intestine help prevent the establishment of disease-producing microorganisms, and peristalsis tends to move microbes out of the body.", "id": "s7-9"}, {"s": 7, "t": "match", "q": "Match each nonspecific defense to how it works.", "p": [["Nasal passages", "Moist membranes and cilia trap microorganisms and dust"], ["Lungs", "Alveolar macrophages ingest microorganisms and particles"], ["Eye", "Tears wash microorganisms away and contain lysozyme"], ["Vagina", "A low, acidic pH inhibits disease-producing microorganisms"], ["Urethra", "Urine flow flushes bacteria and keeps them from ascending"]], "r": "Each nonspecific defense works mechanically or chemically: the nose traps, the lungs ingest, tears wash and contain lysozyme, the vagina acidifies, and urine flushes.", "id": "s7-10"}, {"s": 8, "t": "sata", "q": "Which measures reduce an individual's susceptibility to infection? Select all that apply.", "o": ["Hygiene", "Nutrition", "Fluids", "Sleep", "Stress management", "Antibiotic prophylaxis"], "a": [0, 1, 2, 3, 4], "r": "The health promotion measures that reduce susceptibility to infection are hygiene, nutrition, fluids, sleep and stress management.", "id": "s8-1"}, {"s": 8, "t": "sata", "q": "How does hygiene reduce the risk of infection? Select all that apply.", "o": ["Good oral care, including flossing, reduces the likelihood of an oral infection", "Regular bathing removes microorganisms and dirt", "Shampooing removes microorganisms and dirt", "Bathing raises the pH of the skin", "Flossing strengthens the immune response"], "a": [0, 1, 2], "r": "Good oral care, including flossing the teeth, reduces the likelihood of an oral infection, and regular and thorough bathing and shampooing remove microorganisms and dirt that can result in an infection.", "id": "s8-2"}, {"s": 8, "t": "sata", "q": "How does nutrition reduce the risk of infection? Select all that apply.", "o": ["A balanced diet enhances the health of all body tissues", "It helps keep the skin intact and able to repel microorganisms", "It enables tissues to maintain and rebuild themselves", "It keeps the immune system functioning well", "It raises the acidity of the stomach", "It increases the flow of saliva"], "a": [0, 1, 2, 3], "r": "A balanced diet enhances the health of all body tissues, helps keep the skin intact and able to repel microorganisms, enables tissues to maintain and rebuild themselves, and helps keep the immune system functioning well.", "id": "s8-3"}, {"s": 8, "t": "mc", "q": "Why does inadequate nutrition impair the body's ability to fight infection at the antibody level?", "o": ["Antibodies require vitamin C to be released", "Antibodies are proteins, so depleted protein reserves impair their synthesis", "Antibodies are stored in fat tissue, which is lost first", "Antibodies are produced only when blood glucose is normal"], "a": [1], "r": "Because antibodies are proteins, inadequate nutrition can impair the body's ability to synthesize them, especially when protein reserves are depleted.", "id": "s8-4"}, {"s": 8, "t": "sata", "q": "How does adequate fluid intake reduce the risk of infection? Select all that apply.", "o": ["It supports fluid output, which flushes the bladder and urethra", "It removes microorganisms that could cause an infection", "It keeps respiratory secretions thin and easier to expel", "It increases the acidity of the skin", "It raises the body's antibody level"], "a": [0, 1, 2], "r": "Adequate fluid intake is essential for fluid output, which flushes out the bladder and urethra, removing microorganisms that could cause an infection. It is also important for the respiratory system, as it keeps secretions thin and easier to expel.", "id": "s8-5"}, {"s": 8, "t": "mc", "q": "Why is adequate sleep important in preventing infection?", "o": ["It lowers the body's circulating cortisol level to zero during the night", "It is essential to maintaining health and renewing the body's energy to fight infection", "It increases the production of normal flora on the skin and in the intestines", "It allows the skin to repair overnight so it remains an effective barrier"], "a": [1], "r": "Adequate sleep is essential to maintaining health and renewing the body's energy to fight infection.", "id": "s8-6"}, {"s": 8, "t": "sata", "q": "What does prolonged elevation of blood cortisol do? Select all that apply.", "o": ["Depletes energy stores", "Leads to a state of exhaustion", "Decreases resistance to infection", "Increases antibody production", "Raises the acidity of the stomach"], "a": [0, 1, 2], "r": "The prolonged elevation of blood cortisol depletes energy stores, leads to a state of exhaustion, and decreases resistance to infection.", "id": "s8-7"}, {"s": 9, "t": "mc", "q": "Why may an infant not respond to infection the way an older child does?", "o": ["Infants have fewer portals of entry", "Infants have an underdeveloped immune system", "Infants have more normal flora protecting them", "Infants metabolize pathogens more quickly"], "a": [1], "r": "Infants may not be able to respond to infections because of an underdeveloped immune system. As a result, in the first few months of life, infections may not be associated with typical signs and symptoms; for example, an infant with an infection may not have a fever.", "id": "s9-1"}, {"s": 9, "t": "mc", "q": "Why do breastfed infants have more protection against infection than formula-fed infants?", "o": ["Breast milk is sterile, whereas prepared formula is easily contaminated", "Breast milk contains maternal antibodies, giving higher levels of passive immunity", "Breast milk has a lower, more acidic pH that inhibits bacterial growth in the gut", "Breastfeeding stimulates the infant to produce antibodies of their own sooner"], "a": [1], "r": "Breastfed infants enjoy higher levels of passive immunity against infections than infants fed with formula because of maternal antibodies in breast milk.", "id": "s9-2"}, {"s": 9, "t": "mc", "q": "Which age group is at higher risk for fever-induced seizures?", "o": ["Newborns under 1 month", "Children between 6 months and 5 years", "Children between 5 and 10 years", "Adolescents"], "a": [1], "r": "Children between 6 months and 5 years of age are at higher risk for fever-induced (febrile) seizures.", "id": "s9-3"}, {"s": 9, "t": "sata", "q": "What is essential to preventing and treating infections in children? Select all that apply.", "o": ["Hand hygiene", "Comprehensive immunizations", "Proper nutrition", "Adequate hydration", "Appropriate rest", "Prophylactic antibiotics"], "a": [0, 1, 2, 3, 4], "r": "Hand hygiene, comprehensive immunizations, proper nutrition, adequate hydration and appropriate rest are essential to preventing and/or treating infections in children. Hand cleansing and good hygiene in child care centers and schools are important to prevent spread.", "id": "s9-4"}, {"s": 9, "t": "mc", "q": "Which infection risk is specific to adolescents?", "o": ["Febrile seizures", "Sexually transmitted diseases", "Delayed wound healing", "Underdeveloped immune response"], "a": [1], "r": "Adolescents are at high risk for sexually transmitted diseases and should be well educated about how to prevent infections.", "id": "s9-5"}, {"s": 9, "t": "sata", "q": "Why does poor nutrition increase infection risk in older adults? Select all that apply.", "o": ["Adequate protein is necessary to build up and maintain the immune system", "Lack of proper intake of necessary vitamins challenges the immune system", "Lack of proper intake of necessary minerals challenges the immune system", "Poor nutrition directly raises blood cortisol", "Poor nutrition increases the acidity of the skin"], "a": [0, 1, 2], "r": "Nutrition is often poor in older adults. Certain nutritional components, especially adequate protein, are necessary to build up and maintain the immune system, and lack of proper intake of necessary vitamins and minerals challenges the older adult immune system.", "id": "s9-6"}, {"s": 9, "t": "mc", "q": "How does diabetes mellitus increase infection risk and delay healing in older adults?", "o": ["It raises the blood cortisol level, which lowers resistance to infection", "It alters nutrition and impairs peripheral circulation, decreasing oxygen transport to tissues", "It suppresses the production of antibodies in the bone marrow over time", "It increases the number of portals of entry through which pathogens enter"], "a": [1], "r": "Diabetes mellitus, which occurs frequently in older adults, increases the risk of infection and delayed healing by causing an alteration in nutrition and impaired peripheral circulation, which in turn decrease oxygen transport to the tissues.", "id": "s9-7"}, {"s": 9, "t": "mc", "q": "How does the aging immune system respond to an antigen?", "o": ["It responds faster than before, but far less completely than it once did", "It reacts slowly, allowing the antigen to reproduce several times before being recognized", "It responds at a normal speed but produces fewer antibodies than it used to", "It no longer recognizes introduced antigens as foreign to the body at all"], "a": [1], "r": "The immune system reacts slowly to the introduction of an antigen, allowing the antigen to reproduce itself several times before the immune system recognizes it.", "id": "s9-8"}, {"s": 9, "t": "sata", "q": "Which two findings show that an older adult may not exhibit the classic signs of infection? Select all that apply.", "o": ["Lack of fever during infections", "Mental status changes during infection", "Absence of any white blood cell response", "A total loss of the gag reflex", "Complete absence of pain"], "a": [0, 1], "r": "Under the bullet that older adults may not exhibit the classic signs of infection, the two sub-points are lack of fever during infections and experiencing mental status changes during infection.", "id": "s9-9"}, {"s": 10, "t": "mc", "q": "According to the CDC, what is the single most important infection prevention strategy?", "o": ["Wearing gloves", "Hand hygiene", "Disinfecting surfaces", "Abiding by isolation precautions"], "a": [1], "r": "According to the CDC, hand hygiene is the single MOST important prevention strategy.", "id": "s10-1"}, {"s": 10, "t": "mc", "q": "Which action is the first priority in preventing infection when providing client care?", "o": ["Hand hygiene", "Wearing gloves", "Disinfecting surfaces", "Assessing for an infection"], "a": [0], "r": "Hand hygiene is the first priority, because the CDC identifies it as the single most important prevention strategy.", "id": "s10-2"}, {"s": 10, "t": "sata", "q": "Which are infection prevention techniques in healthcare? Select all that apply.", "o": ["Hand hygiene", "Getting and teaching about immunization", "Disinfecting surfaces", "Abiding by isolation precautions", "Appropriate disposal of soiled equipment", "Prophylactic antibiotics for all clients"], "a": [0, 1, 2, 3, 4], "r": "The infection prevention techniques are hand hygiene, getting and teaching about immunization, disinfecting surfaces, abiding by isolation precautions, appropriate disposal of soiled equipment, and sterile technique when required.", "id": "s10-3"}, {"s": 10, "t": "mc", "q": "How does immunization prevent infection?", "o": ["It kills pathogens already in the body", "It builds up immunity towards the specific pathogen", "It creates a physical barrier at the portal of entry", "It reduces the virulence of the pathogen"], "a": [1], "r": "Getting and teaching about immunization builds up immunity towards the specific pathogen.", "id": "s10-4"}, {"s": 10, "t": "sata", "q": "What does abiding by isolation precautions involve? Select all that apply.", "o": ["Airborne precautions", "Droplet precautions", "Contact precautions", "Wearing the appropriate personal protective equipment", "Restricting all visitors from the unit", "Administering prophylactic antivirals"], "a": [0, 1, 2, 3], "r": "Abiding by isolation precautions means airborne, droplet and contact precautions, and wearing the appropriate personal protective equipment such as a gown, mask, goggles and gloves.", "id": "s10-5"}, {"s": 10, "t": "sata", "q": "Which steps describe appropriate disposal of soiled equipment? Select all that apply.", "o": ["Bagging contaminated articles before removing them from the room", "Handling soiled linens as little as possible, with the least agitation", "Placing lab specimens in a leakproof container labeled as a biohazard", "Placing needles and sharps in a puncture-resistant container", "Recapping needles before placing them in the sharps container", "Sending soiled linen to the laundry in an open hamper"], "a": [0, 1, 2, 3], "r": "Bag contaminated articles before removal from the room, handle linens as little as possible with the least agitation, place lab specimens in a leakproof labeled biohazard container, and place needles and sharps in a puncture-resistant container.", "id": "s10-6"}, {"s": 10, "t": "sata", "q": "How should needles, syringes and sharps be handled? Select all that apply.", "o": ["Place them in a designated puncture-resistant container", "Use approved safety or needleless systems", "Do not detach needles from the syringe before disposal", "Do not recap needles before disposal", "Recap the needle carefully using one hand", "Bend the needle before disposal to prevent reuse"], "a": [0, 1, 2, 3], "r": "Place needles, syringes and sharps such as lancets, scalpels and broken glass in a designated sharps or puncture-resistant container. To avoid puncture wounds, use approved safety or needleless systems and do not detach needles from the syringe or recap them before disposal.", "id": "s10-7"}, {"s": 11, "t": "sata", "q": "Which are the four types of precautions? Select all that apply.", "o": ["Standard", "Airborne", "Droplet", "Contact", "Reverse", "Neutropenic"], "a": [0, 1, 2, 3], "r": "The four precautions are standard, airborne, droplet and contact. Enteric precautions are a subset of contact precautions.", "id": "s11-1"}, {"s": 11, "t": "mc", "q": "When are standard precautions used?", "o": ["Only in the care of clients who have a confirmed, documented infection", "In the care of all hospitalized individuals regardless of diagnosis or infection status", "Only when exposure to blood or other body fluids is expected during care", "Only in the care of clients who are known to be immunocompromised"], "a": [1], "r": "Standard precautions are used in the care of all hospitalized individuals regardless of their diagnosis or possible infection status. The assumption is that blood, body fluids and secretions may contain infectious agents.", "id": "s11-2"}, {"s": 11, "t": "mc", "q": "What assumption underlies standard precautions?", "o": ["That every client is harboring an infection that has not yet been diagnosed", "That blood, body fluids and secretions may contain infectious agents", "That all clients are immunocompromised and cannot fight off organisms", "That the client's environment is already contaminated with pathogens"], "a": [1], "r": "The assumption behind standard precautions is that blood, body fluids and secretions may contain infectious agents.", "id": "s11-3"}, {"s": 11, "t": "mc", "q": "When are airborne precautions used?", "o": ["For illnesses transmitted by particle droplets larger than 5 microns", "For illnesses transmitted by airborne droplet nuclei smaller than 5 microns", "For illnesses transmitted by direct contact with the patient", "For all hospitalized clients regardless of diagnosis"], "a": [1], "r": "Airborne precautions are used for patients known to have or suspected of having serious illnesses transmitted by airborne droplet nuclei smaller than 5 microns.", "id": "s11-4"}, {"s": 11, "t": "sata", "q": "Which illnesses require airborne precautions? Select all that apply.", "o": ["Measles (rubeola)", "Varicella, including disseminated zoster", "Tuberculosis", "COVID-19", "Pertussis", "Mumps"], "a": [0, 1, 2, 3], "r": "Airborne precautions are used for measles (rubeola), varicella including disseminated zoster, tuberculosis, SARS, avian influenza and COVID-19. Pertussis and mumps are droplet.", "id": "s11-5"}, {"s": 11, "t": "mc", "q": "When are droplet precautions used?", "o": ["For illnesses transmitted by droplet nuclei smaller than 5 microns", "For illnesses transmitted by particle droplets larger than 5 microns", "For illnesses transmitted by contact with the patient's environment", "For illnesses transmitted through contaminated food"], "a": [1], "r": "Droplet precautions are used for patients known to have or suspected of having serious illnesses transmitted by particle droplets larger than 5 microns.", "id": "s11-6"}, {"s": 11, "t": "sata", "q": "Which illnesses require droplet precautions? Select all that apply.", "o": ["Pertussis", "Mumps", "Rubella", "Influenza", "Tuberculosis", "Measles"], "a": [0, 1, 2, 3], "r": "Droplet precautions cover pertussis, mumps, rubella, influenza, diphtheria (pharyngeal), Mycoplasma pneumoniae, streptococcal pharyngitis, bacterial meningitis and pneumonic plague. Tuberculosis and measles are airborne.", "id": "s11-7"}, {"s": 11, "t": "mc", "q": "When are contact precautions used?", "o": ["For illnesses transmitted by particle droplets that are larger than 5 microns", "For illnesses easily transmitted by direct patient contact or by contact with items in the patient's environment", "For illnesses spread only through exposure to blood and bloody body fluids", "For all hospitalized clients, regardless of their diagnosis or infection status"], "a": [1], "r": "Contact precautions are used for patients known to have or suspected of having serious illnesses that are easily transmitted by direct patient contact or by contact with items in the patient's environment.", "id": "s11-8"}, {"s": 11, "t": "sata", "q": "Which illnesses require contact precautions? Select all that apply.", "o": ["MRSA", "Vancomycin-resistant enterococci (VRE)", "Scabies and lice", "Herpes simplex and impetigo", "Tuberculosis", "Rubella"], "a": [0, 1, 2, 3], "r": "Contact precautions cover colonization with multidrug-resistant bacteria such as MRSA and VRE, and highly contagious skin infections such as herpes simplex, impetigo, pediculosis (lice) and scabies. TB is airborne and rubella is droplet.", "id": "s11-9"}, {"s": 11, "t": "mc", "q": "What are enteric precautions?", "o": ["A separate fifth category of precautions", "A subset of contact precautions", "A subset of droplet precautions", "The same thing as standard precautions"], "a": [1], "r": "Enteric precautions are a subset of contact precautions, used for specific enteric infections such as C. difficile.", "id": "s11-10"}, {"s": 11, "t": "mc", "q": "Under enteric precautions, how must the nurse clean their hands?", "o": ["With alcohol-based hand sanitizer, which is faster", "By washing with soap and water", "With either sanitizer or soap and water", "With an antiseptic wipe before gloving"], "a": [1], "r": "Under enteric precautions the nurse must wash their hands with soap and water rather than using alcohol-based hand sanitizer, because sanitizer does not kill the spores.", "id": "s11-11"}, {"s": 11, "t": "mc", "q": "What is the most common example of an infection requiring enteric precautions?", "o": ["MRSA", "Clostridium difficile", "Tuberculosis", "Influenza"], "a": [1], "r": "The most common example of an enteric precaution is Clostridium difficile, along with undiagnosed diarrhea, rotavirus and norovirus.", "id": "s11-12"}, {"s": 11, "t": "grid", "q": "For each illness, mark which precautions the isolation chart lists it under. An illness may appear under more than one.", "rows": ["Tuberculosis", "Measles", "Influenza A or B", "Pertussis", "MRSA (skin)", "Scabies", "Clostridium difficile", "COVID-19"], "cols": ["Airborne", "Droplet", "Contact"], "a": [[0], [0], [1], [1], [2], [2], [2], [0]], "r": "Tuberculosis, measles and COVID-19 are airborne. Influenza and pertussis are droplet. MRSA skin infection, scabies and C. difficile are contact; C. difficile is specifically enteric, which is a subset of contact and requires soap and water handwashing.", "rowHead": "Illness", "id": "s11-13"}, {"s": 12, "t": "sata", "q": "Which are the stages of the infectious process? Select all that apply.", "o": ["Incubation period", "Prodromal period", "Illness stage", "Convalescent stage", "Resolution period", "Exposure stage"], "a": [0, 1, 2, 3], "r": "The four stages of the infectious process are the incubation period, the prodromal period, the illness stage (which includes decline) and the convalescent stage.", "id": "s12-1"}, {"s": 12, "t": "mc", "q": "What happens during the incubation period?", "o": ["Symptoms begin to appear but are nonspecific", "The pathogen begins active replication but does not yet cause symptoms", "The pathogen proliferates and symptoms peak", "Affected tissues are repaired and manifestations resolve"], "a": [1], "r": "The incubation period is the initial stage, during which the pathogen begins active replication but does not yet cause symptoms.", "id": "s12-2"}, {"s": 12, "t": "sata", "q": "Which symptoms appear during the prodromal period? Select all that apply.", "o": ["General malaise", "Fever", "Myalgias", "Headache", "Fatigue", "Symptoms highly specific to the infecting organism"], "a": [0, 1, 2, 3, 4], "r": "In the prodromal stage symptoms begin to appear, and they are often nonspecific: general malaise, fever, myalgias, headache and fatigue.", "id": "s12-3"}, {"s": 12, "t": "mc", "q": "What happens during the illness stage?", "o": ["The pathogen replicates silently and does not yet produce any symptoms", "The pathogen proliferates and disseminates rapidly, and symptoms are at their peak", "The body eliminates the pathogen and the affected tissues are repaired", "Nonspecific symptoms such as malaise and myalgias first begin to appear"], "a": [1], "r": "Maximal impact of the infectious process occurs during the illness stage as the pathogen proliferates and disseminates rapidly. Manifestations are more pronounced and specific to the infecting organism and site, and symptoms are at their peak.", "id": "s12-4"}, {"s": 12, "t": "mc", "q": "What happens during decline?", "o": ["The pathogen begins replicating again after a period of being contained", "The body's defenses and treatment are killing the infectious agent, so numbers and symptoms decline", "Tissues are fully repaired and the pathogen is eliminated from the body", "Nonspecific symptoms such as malaise and fever begin for the first time"], "a": [1], "r": "Decline occurs within the illness stage: the body's defenses are killing the infectious agent and/or treatment is working, so numbers are declining, which leads to a decline in symptoms.", "id": "s12-5"}, {"s": 12, "t": "mc", "q": "What happens during the convalescent stage?", "o": ["The pathogen first begins replicating", "Affected tissues are repaired and manifestations resolve", "Symptoms reach their maximum intensity", "Nonspecific symptoms such as malaise appear"], "a": [1], "r": "As the infection is contained and the pathogen eliminated, the convalescent stage occurs. During this stage, affected tissues are repaired and manifestations resolve.", "id": "s12-6"}, {"s": 12, "t": "match", "q": "Match each stage of the infectious process to what happens.", "p": [["Incubation period", "The pathogen replicates but causes no symptoms yet"], ["Prodromal period", "Nonspecific symptoms such as malaise and fever begin"], ["Illness stage", "The pathogen proliferates and symptoms peak"], ["Convalescent stage", "Tissues are repaired and manifestations resolve"]], "r": "The four stages run incubation (silent replication), prodromal (nonspecific symptoms), illness (peak symptoms, including decline), and convalescent (repair and resolution).", "id": "s12-7"}, {"s": 13, "t": "mc", "q": "What is an antipyretic?", "o": ["A medication that kills bacteria", "A fever reducer", "A medication that relieves pain only", "A medication that reduces swelling"], "a": [1], "r": "Antipyretics are fever reducers. The examples given are acetaminophen (Tylenol), NSAIDs such as ibuprofen and naproxen, and aspirin.", "id": "s13-1"}, {"s": 13, "t": "sata", "q": "Which medications are antipyretics? Select all that apply.", "o": ["Acetaminophen (Tylenol)", "Ibuprofen", "Naproxen", "Aspirin", "Ciprofloxacin", "Fluconazole"], "a": [0, 1, 2, 3], "r": "The antipyretics listed are acetaminophen (Tylenol), NSAIDs including ibuprofen and naproxen, and aspirin. Ciprofloxacin is an antibiotic and fluconazole is an antifungal.", "id": "s13-2"}, {"s": 13, "t": "mc", "q": "Which class do ibuprofen and naproxen belong to?", "o": ["Antibiotics", "NSAIDs", "Antivirals", "Antifungals"], "a": [1], "r": "Ibuprofen and naproxen are NSAIDs, which are listed among the antipyretics along with acetaminophen and aspirin.", "id": "s13-3"}, {"s": 13, "t": "sata", "q": "Which cues may the nurse assess in a client with an infection? Select all that apply.", "o": ["Fever", "Inflammation in the area of infection", "Pain or burning when urinating", "Cough", "Chills and sweats", "Bradycardia"], "a": [0, 1, 2, 3, 4], "r": "The cues in the physical examination table are fever, inflammation in the area of infection, pain or burning when urinating, cough, chills and sweats, nasal congestion, fatigue, breathing difficulties and change in mental status.", "id": "s13-4"}, {"s": 13, "t": "sata", "q": "Which additional cues appear in the physical examination table for infection? Select all that apply.", "o": ["Nasal congestion", "Fatigue", "Breathing difficulties", "Change in mental status", "Hypertension", "Weight gain"], "a": [0, 1, 2, 3], "r": "The remaining cues are nasal congestion, fatigue, breathing difficulties and change in mental status, completing the list with fever, inflammation, pain or burning when urinating, cough, and chills and sweats.", "id": "s13-5"}, {"s": 14, "t": "mc", "q": "What is the normal white blood cell count?", "o": ["3,000-8,000/mm3", "5,000-10,000/mm3", "10,000-15,000/mm3", "4,000-12,000/mm3"], "a": [1], "r": "The normal WBC count is 5,000-10,000/mm3. Above 10,000 is leukocytosis and below 5,000 is leukopenia.", "id": "s14-1"}, {"s": 14, "t": "mc", "q": "What is a WBC count above 10,000/mm3 called?", "o": ["Leukopenia", "Leukocytosis", "Neutropenia", "Leukemia"], "a": [1], "r": "A WBC above 10,000/mm3 is called leukocytosis and indicates infection, inflammation, trauma or stress.", "id": "s14-2"}, {"s": 14, "t": "sata", "q": "What does leukocytosis indicate? Select all that apply.", "o": ["Infection", "Inflammation", "Trauma", "Stress", "Immunocompromise", "Bone marrow suppression"], "a": [0, 1, 2, 3], "r": "Leukocytosis, a WBC above 10,000/mm3, indicates infection, inflammation, trauma or stress.", "id": "s14-3"}, {"s": 14, "t": "mc", "q": "What is a WBC count below 5,000/mm3 called, and what does it mean for the client?", "o": ["Leukocytosis, meaning an active infection", "Leukopenia, meaning the client is immunocompromised", "Neutropenia, meaning the client has an allergy", "Thrombocytopenia, meaning the client may bleed"], "a": [1], "r": "A WBC below 5,000/mm3 is leukopenia, which leaves the patient immunocompromised.", "id": "s14-4"}, {"s": 14, "t": "mc", "q": "A client's CBC shows a WBC of 3,000/mm3. What does this suggest?", "o": ["An active bacterial infection", "The client may be immunocompromised", "Dehydration with hemoconcentration", "A normal result for an adult"], "a": [1], "r": "Normal WBC is 5,000-10,000/mm3. A WBC of 3,000 is leukopenia, which leaves the patient immunocompromised.", "id": "s14-5"}, {"s": 14, "t": "mc", "q": "What is sensitivity testing?", "o": ["Testing the client for an allergy to the antibiotic before it is given", "Exposing the cultured organism to antibiotics to see which is likely to be most effective", "Measuring the client's blood level of an antibiotic at its peak and trough", "Detecting antigens in a specimen at the point of care for a rapid result"], "a": [1], "r": "After the organism is cultured, it is subjected to various antibiotics known to be effective against its particular strain to determine which antibiotic is likely to be most effective. This process is known as sensitivity testing. In general 24 to 48 hours are required to grow the organism, so obtain specimens before instituting therapy, and a broad spectrum antibiotic may be started while the results are pending.", "id": "s14-6"}, {"s": 14, "t": "mc", "q": "What is direct antigen testing designed to do?", "o": ["Measure the client's antibody level against the suspected organism", "Detect antigens in specimens for rapid, accurate identification of the microorganism", "Grow the organism in a culture medium so it can be identified by sight", "Measure the blood level of an antimicrobial to confirm it is therapeutic"], "a": [1], "r": "Direct antigen tests are designed to detect antigens in specimens. They offer rapid and accurate identification of the offending microorganism and are used in point-of-care testing, such as a rapid strep test.", "id": "s14-7"}, {"s": 14, "t": "mc", "q": "Why are antibiotic peak and trough levels drawn?", "o": ["To confirm the organism is sensitive to the antibiotic", "To monitor therapeutic blood levels of the prescribed medication", "To detect an allergic reaction before it occurs", "To determine how long the antibiotic course should be"], "a": [1], "r": "Antibiotic peak and trough levels monitor therapeutic blood levels of the prescribed medications, ensuring the level stays within the therapeutic range and does not reach a toxic level.", "id": "s14-8"}, {"s": 14, "t": "sata", "q": "Which diagnostic tests are used in the nursing assessment of a client with an infection? Select all that apply.", "o": ["WBC count", "Cultures", "Direct antigen testing", "Antibiotic peak and trough", "Urinalysis and stool culture", "Serum osmolality"], "a": [0, 1, 2, 3, 4], "r": "The diagnostic tests listed are WBC count, cultures, direct antigen testing, antibiotic peak and trough, X-ray/CT/MRI, urinalysis and stool culture.", "id": "s14-9"}, {"s": 15, "t": "mc", "q": "What is medical asepsis?", "o": ["Practices that keep an area or object entirely free of all microorganisms", "Practices intended to confine a specific area, limiting the number, growth and transmission of microorganisms", "The complete absence of disease-causing microorganisms from a field or object", "The sterilization of all reusable equipment before it is used on a client"], "a": [1], "r": "Medical asepsis is practices intended to confine a specific area, thus limiting the number, growth and transmission of microorganisms. It is described as clean or dirty.", "id": "s15-1"}, {"s": 15, "t": "mc", "q": "What is surgical asepsis?", "o": ["Practices that confine microorganisms to a limited area", "Practices that keep an area or object free of all microorganisms", "The use of clean gloves and a clean work surface", "The use of standard precautions during a procedure"], "a": [1], "r": "Surgical asepsis is practices that keep an area or object free of all microorganisms, meaning the absence of disease-causing microorganisms. It is also called sterile technique.", "id": "s15-2"}, {"s": 15, "t": "mc", "q": "What does clean mean in medical asepsis?", "o": ["All microbes are absent", "Almost all microbes are absent", "Microbes are present but harmless", "Only pathogens have been removed"], "a": [1], "r": "In medical asepsis, clean means almost all microbes are absent. The example given is the steps to put in an NG tube: wash hands, use a new tube, wear clean gloves, clean the surfaces you work on.", "id": "s15-3"}, {"s": 15, "t": "mc", "q": "What does dirty mean in medical asepsis?", "o": ["All microbes have been removed", "Microbes are likely present, some capable of causing disease", "The area has been sterilized but then touched", "Only normal flora are present"], "a": [1], "r": "In medical asepsis, dirty means microbes are likely to be present, some of which are capable of causing disease. Soiled and contaminated are other words for it.", "id": "s15-4"}, {"s": 15, "t": "sata", "q": "Which are examples of surgical asepsis? Select all that apply.", "o": ["Creating a sterile field", "Wearing sterile gloves", "Using only sterilized equipment", "Washing your hands before the procedure", "Wearing regular clean gloves"], "a": [0, 1, 2], "r": "Surgical asepsis is creating a sterile field, wearing sterile gloves and only utilizing sterilized equipment.", "id": "s15-5"}, {"s": 15, "t": "sata", "q": "For which procedures is surgical asepsis used? Select all that apply.", "o": ["Catheter placement", "Surgeries", "All invasive procedures", "NG tube placement", "Oral medication administration"], "a": [0, 1, 2], "r": "Surgical asepsis is used for all invasive procedures, such as catheter placement and surgeries. NG tube placement is a medical asepsis example.", "id": "s15-6"}, {"s": 15, "t": "match", "q": "Match each term to its description.", "p": [["Medical asepsis (clean)", "Limits the number, growth and transmission of microorganisms"], ["Surgical asepsis (sterile)", "Keeps an area or object free of all microorganisms"], ["Dirty", "Microbes likely present, some capable of causing disease"]], "r": "Medical asepsis confines and limits microorganisms and is described as clean or dirty. Surgical asepsis keeps an area free of all microorganisms. Dirty means soiled or contaminated.", "id": "s15-7"}, {"s": 16, "t": "mc", "q": "What is the main cause of antibiotic resistance?", "o": ["Bacteria naturally mutating over time, independent of antibiotic exposure", "The prolonged and inappropriate use of antibiotics in healthcare and in farming", "The use of broad spectrum antibiotics rather than narrow spectrum ones", "Patients failing to attend the follow-up appointments after their therapy"], "a": [1], "r": "The main cause of antibiotic resistance is the prolonged and inappropriate use of antibiotics in healthcare and in farming.", "id": "s16-1"}, {"s": 16, "t": "mc", "q": "How does a resistant colony of bacteria develop?", "o": ["Antibiotics cause the bacteria to mutate during the course of treatment", "Bacteria with resistance genes survive therapy and reproduce, and can spread to other organisms", "Bacteria absorb the antibiotic into the cell wall and become immune to it", "The immune system stops recognizing the bacteria once therapy has started"], "a": [1], "r": "Bacteria with genetic mutations or genes that confer resistance survive antibiotic therapy, and the resulting reproduction of a colony of resistant bacteria can be spread to other organisms.", "id": "s16-2"}, {"s": 16, "t": "sata", "q": "Which measures help prevent antibiotic resistance? Select all that apply.", "o": ["Teaching clients to take the full regime of antibiotics", "Only using antibiotics for bacterial infections", "Culturing specimens to ensure the infection is bacterial", "Using the appropriate antibiotic for the organism", "Universal precautions, most importantly hand hygiene", "Prescribing a broad spectrum antibiotic for every infection"], "a": [0, 1, 2, 3, 4], "r": "Prevention includes teaching clients to take the full regime of antibiotics, only using antibiotics for bacterial infections, culturing specimens to ensure the infection is bacterial and the antibiotic is appropriate, universal precautions with hand hygiene as the most important, and modest use of antibiotics.", "id": "s16-3"}, {"s": 16, "t": "mc", "q": "Why must clients take the full regime of antibiotics?", "o": ["To prevent an allergic reaction from developing partway through therapy", "So the antibiotic fully kills the targeted bacteria and does not leave any lingering to build up resistance", "To maintain a therapeutic peak and trough level throughout the whole course", "To avoid damaging the normal flora of the gut by stopping the drug early"], "a": [1], "r": "Teach clients to take the full regime of antibiotics so it fully kills the targeted bacteria and does not leave any lingering to build up resistance.", "id": "s16-4"}, {"s": 17, "t": "mc", "q": "What is a urinary tract infection?", "o": ["An infection of the bladder only", "An infection of any or multiple parts of the urinary tract", "An infection of the kidneys only", "An inflammation of the urinary tract without infection"], "a": [1], "r": "A UTI is an infection of any or multiple parts of the urinary tract: the kidneys, ureters, bladder or urethra.", "id": "s17-1"}, {"s": 17, "t": "mc", "q": "What can cause a UTI?", "o": ["Only bacteria", "Bacteria, viruses or fungi", "Only bacteria and viruses", "Only fungi and parasites"], "a": [1], "r": "Urinary tract infections can be bacterial, viral or fungal and may be categorized in several ways.", "id": "s17-2"}, {"s": 17, "t": "mc", "q": "How do pathogens usually enter the urinary tract?", "o": ["By descending from the kidneys into the ureters and then the bladder", "By ascending from the mucous membranes of the perineal area into the lower urinary tract", "Through the bloodstream, carried from an infected site elsewhere in the body", "Through the lymphatic system, carried from the bowel to the urinary tract"], "a": [1], "r": "Pathogens usually enter the urinary tract by ascending from the mucous membranes of the perineal area into the lower urinary tract. Bacteria that have colonized the urethra, vagina or perineal tissues are the usual source.", "id": "s17-3"}, {"s": 17, "t": "mc", "q": "Which organism is the most common cause of a UTI?", "o": ["Staphylococcus aureus", "Escherichia coli", "Candida albicans", "Clostridium difficile"], "a": [1], "r": "E. coli is the most common organism causing a UTI. It is resident flora of the large intestine that causes infection when it reaches the urinary tract.", "id": "s17-4"}, {"s": 17, "t": "sata", "q": "Which are risk factors for a UTI? Select all that apply.", "o": ["The shortness of a woman's urethra", "Wiping from back to front", "Urinary stasis, retention and reflux", "Urinary catheters", "Poor hygiene", "Drinking cranberry juice"], "a": [0, 1, 2, 3, 4], "r": "The risk factors are the shortness of a woman's urethra, wiping from back to front (rectum to vagina), urinary stasis, retention and reflux, urinary catheters, and poor hygiene.", "id": "s17-5"}, {"s": 17, "t": "sata", "q": "Which measures help prevent a UTI? Select all that apply.", "o": ["Good hygiene", "Cleansing from vagina to rectum", "Adequate fluid intake to keep the urinary system flushed", "Voiding after intercourse", "Low-sugar cranberry juice and vitamin C to maintain urine acidity", "Limiting fluids to reduce bladder irritation"], "a": [0, 1, 2, 3, 4], "r": "Prevention includes good hygiene, cleansing from vagina to rectum, adequate fluid intake, voiding after intercourse, and drinking 2 glasses a day of low-sugar cranberry juice and taking vitamin C to maintain urine acidity.", "id": "s17-6"}, {"s": 17, "t": "sata", "q": "Which are signs and symptoms of a UTI? Select all that apply.", "o": ["Dysuria, meaning painful or difficult urination", "Nocturia, meaning voiding 2 or more times a night", "Urgency", "Hematuria", "Pyuria, meaning cloudy foul-smelling urine", "Polyuria with dilute urine"], "a": [0, 1, 2, 3, 4], "r": "The signs and symptoms are dysuria, nocturia, urgency, hematuria, pyuria, suprapubic pain and WBCs in the urine.", "id": "s17-7"}, {"s": 17, "t": "sata", "q": "Which diagnostic tests are used for a UTI? Select all that apply.", "o": ["Urinalysis, to assess for pyuria, bacteria and blood cells", "Urine culture and sensitivity, to identify the organism and effective antibiotic", "Stool culture", "Blood culture", "Chest X-ray"], "a": [0, 1], "r": "Urinalysis assesses for pyuria, bacteria and blood cells in the urine. Urine culture and sensitivity tests may be ordered to identify the infecting organism and the most effective antibiotic.", "id": "s17-8"}, {"s": 17, "t": "sata", "q": "Which interventions are used for a client with a UTI? Select all that apply.", "o": ["Antibiotics if bacterial", "An antipyretic for fever", "Analgesics for pain", "Encouraging fluids", "Restricting fluids", "An indwelling catheter"], "a": [0, 1, 2, 3], "r": "The interventions for a UTI are antibiotics if bacterial, an antipyretic for fever, analgesics for pain, and encouraging fluids.", "id": "s17-9"}, {"s": 18, "t": "mc", "q": "What is cellulitis?", "o": ["A chronic fungal infection of the surface layers of the skin", "An acute bacterial infection of the dermis and underlying connective tissue", "An inflammation of the epidermis that occurs without any infection present", "A viral infection of the subcutaneous tissue beneath the dermal layer"], "a": [1], "r": "Cellulitis is an acute bacterial infection of the dermis and underlying connective tissue.", "id": "s18-1"}, {"s": 18, "t": "mc", "q": "What causes cellulitis?", "o": ["Prolonged pressure on the skin over a bony prominence", "Compromised skin allowing normal skin flora or outside agents entry into the dermis", "An allergic reaction to a topical agent applied to the area", "Poor circulation on its own, without any break in the skin surface"], "a": [1], "r": "Cellulitis occurs when the skin is compromised, allowing normal skin flora or outside infectious agents entry into the dermis through a break in the skin, such as after a puncture or laceration.", "id": "s18-2"}, {"s": 18, "t": "mc", "q": "Which organism most commonly causes cellulitis?", "o": ["Group A Streptococcus", "Staphylococcus aureus", "Methicillin-resistant Staphylococcus aureus", "Escherichia coli"], "a": [1], "r": "The most common causative organism is Staphylococcus aureus, followed by methicillin-resistant Staphylococcus aureus, and finally group A Streptococcus.", "id": "s18-3"}, {"s": 18, "t": "sata", "q": "Which are risk factors for cellulitis? Select all that apply.", "o": ["Any interruption of skin integrity", "Untreated tooth decay", "Older age, as skin is less elastic and more easily injured", "Peripheral neuropathy with decreased sensation and circulation", "Malnutrition and dehydration", "Drinking cranberry juice"], "a": [0, 1, 2, 3, 4], "r": "The risk factors are any interruption of skin integrity, untreated tooth decay, older adult skin that is less elastic, peripheral neuropathy, malnutrition, dehydration, a weakened immune system and peripheral vascular disease.", "id": "s18-4"}, {"s": 18, "t": "sata", "q": "Which measures help prevent cellulitis? Select all that apply.", "o": ["Good hand hygiene when handling wounds", "Keeping the wound covered and the dressing clean", "Monitoring wounds for signs of infection", "Keeping the skin moisturized and good nail hygiene", "Wearing protective equipment when playing sports", "Leaving wounds open to the air to dry out"], "a": [0, 1, 2, 3, 4], "r": "Prevention includes good hand hygiene when handling wounds, good wound care (keeping it covered, the dressing clean and changed with excessive exudate, monitoring for signs of infection), and skin protection (moisturizing, good nail hygiene, protective equipment for sports).", "id": "s18-5"}, {"s": 18, "t": "mc", "q": "What is the chief symptom of cellulitis?", "o": ["Purulent drainage", "Inflammation", "Fever", "Lymph node enlargement"], "a": [1], "r": "The chief symptom of cellulitis is inflammation, which includes intense pain, heat, erythema and swelling.", "id": "s18-6"}, {"s": 18, "t": "sata", "q": "Which findings indicate localized cellulitis? Select all that apply.", "o": ["A small area of erythema", "Swelling", "Heat", "Pain", "Pus under the skin", "Sepsis"], "a": [0, 1, 2, 3, 4], "r": "Localized cellulitis is a small area of inflammation: erythema, swollen, hot, painful, with pus under the skin. Lymph glands nearby may be swollen.", "id": "s18-7"}, {"s": 18, "t": "mc", "q": "What happens if localized cellulitis is not successfully treated in the early stages?", "o": ["It becomes a chronic skin condition that flares up periodically", "Bacteria can enter the bloodstream and cause a systemic infection leading to sepsis and death", "It resolves on its own once the break in the skin has fully healed", "It converts to a fungal infection of the dermis and connective tissue"], "a": [1], "r": "If localized cellulitis is not successfully treated in the early stages, or in individuals with a compromised immune system, the bacteria can enter the bloodstream and cause a systemic infection that can lead to sepsis and death.", "id": "s18-8"}, {"s": 18, "t": "sata", "q": "Which diagnostic tests are used for cellulitis? Select all that apply.", "o": ["CBC for WBC count", "Fluid cultured at the affected site to identify the organism", "Urinalysis", "Stool culture", "Chest X-ray"], "a": [0, 1], "r": "The diagnostic tests for cellulitis are a CBC for WBC count and fluid cultured at the affected site to identify the organism.", "id": "s18-9"}, {"s": 18, "t": "sata", "q": "Which interventions are used for cellulitis? Select all that apply.", "o": ["Antibiotics to treat the infection", "Analgesics for pain", "Elevation of the site to reduce swelling", "Restricting fluids", "Applying ice to the area for 24 hours"], "a": [0, 1, 2], "r": "The interventions for cellulitis are antibiotics to treat the infection, analgesics for pain, and elevation of the site to reduce swelling.", "id": "s18-10"}, {"s": 19, "t": "mc", "q": "What is a community-acquired infection?", "o": ["An infection that manifests after 48 hours of hospitalization", "An infection that manifests during the first 48 hours of hospitalization", "An infection acquired in a nursing home", "An infection that is resistant to antibiotics"], "a": [1], "r": "Infections that manifest during the first 48 hours of hospitalization are considered to be a community-acquired infection.", "id": "s19-1"}, {"s": 19, "t": "sata", "q": "Which are the common healthcare-associated infections? Select all that apply.", "o": ["Catheter-associated urinary tract infection (CAUTI)", "Clostridium difficile (C. diff)", "Central line-associated bloodstream infection (CLABSI)", "Methicillin-resistant Staphylococcus aureus (MRSA)", "Ventilator-associated pneumonia (VAP)", "Community-acquired pneumonia"], "a": [0, 1, 2, 3, 4], "r": "The common HAIs are CAUTI, C. difficile, CLABSI, MRSA and VAP. All can lead to a systemic infection or sepsis.", "id": "s19-2"}, {"s": 19, "t": "mc", "q": "How does a CAUTI occur?", "o": ["Bacteria travel from the bloodstream to the bladder", "Germs, usually bacteria, enter the urinary tract through the urinary catheter", "The catheter damages the bladder wall, allowing infection", "Urine backs up into the kidneys from the catheter bag"], "a": [1], "r": "A catheter-associated urinary tract infection occurs when germs, usually bacteria, enter the urinary tract through the urinary catheter and cause infection. The signs and symptoms are the same as a UTI.", "id": "s19-3"}, {"s": 19, "t": "mc", "q": "How does C. difficile initially occur in a healthcare setting?", "o": ["Through contaminated food served in the facility", "After antibiotic use, as an opportunistic infection", "Through airborne droplet nuclei", "From contaminated IV fluids"], "a": [1], "r": "C. difficile initially occurs after antibiotic use as an opportunistic infection. It is spread by health workers through poor hand hygiene and not using the appropriate PPE for contact precautions.", "id": "s19-4"}, {"s": 19, "t": "sata", "q": "Which are signs and symptoms of C. difficile? Select all that apply.", "o": ["Watery, foul-smelling diarrhea", "Blood or pus in the stool", "A swollen abdomen", "Abdominal cramping and pain", "Pain at an insertion site", "Yellow or green sputum"], "a": [0, 1, 2, 3], "r": "The signs and symptoms of C. difficile are watery, foul-smelling diarrhea, blood or pus in the stool, a swollen abdomen, and abdominal cramping or pain.", "id": "s19-5"}, {"s": 19, "t": "sata", "q": "What are the treatment options for C. difficile? Select all that apply.", "o": ["Antibiotics", "Fecal microbiota transplant, which introduces good bacteria to the colon", "Removal of the central line", "Vancomycin only", "Weaning from the ventilator"], "a": [0, 1], "r": "The treatments for C. difficile are antibiotics and fecal microbiota transplant, which is the administration of donor feces to introduce good bacteria to the colon.", "id": "s19-6"}, {"s": 19, "t": "mc", "q": "How does a CLABSI occur?", "o": ["Bacteria travel from a urinary catheter to the bloodstream", "Bacteria or other germs enter the patient's central line and then the bloodstream", "Bacteria are inhaled and spread through the blood", "Bacteria enter through a break in the skin at a distant site"], "a": [1], "r": "A central line-associated bloodstream infection occurs when bacteria or other germs enter the patient's central line and then enter the bloodstream. This can occur at the time of placement and during management.", "id": "s19-7"}, {"s": 19, "t": "sata", "q": "Which are signs and symptoms of a CLABSI? Select all that apply.", "o": ["Pain at the site", "Fever", "Chills", "Pus at the site", "Watery diarrhea", "Crackles on auscultation"], "a": [0, 1, 2, 3], "r": "The signs and symptoms of a CLABSI are pain at the site, fever, chills and pus at the site. Treatment is antibiotics and removal of the line.", "id": "s19-8"}, {"s": 19, "t": "mc", "q": "What is MRSA?", "o": ["A fungal infection of the skin", "An antibiotic-resistant strain of Staphylococcus aureus", "An opportunistic infection of the intestines", "A virus that causes pneumonia in ventilated clients"], "a": [1], "r": "Methicillin-resistant Staphylococcus Aureus is an antibiotic-resistant strain of Staphylococcus aureus. It often causes skin infections but can cause infections in other parts of the body such as the lungs and eyes.", "id": "s19-9"}, {"s": 19, "t": "mc", "q": "Which antibiotic is used to treat MRSA?", "o": ["Methicillin", "Vancomycin", "Penicillin G", "Ciprofloxacin"], "a": [1], "r": "MRSA is treated with vancomycin, which is one of the antibiotics it is not resistant to.", "id": "s19-10"}, {"s": 19, "t": "mc", "q": "What is ventilator-associated pneumonia?", "o": ["Pneumonia in any client who is receiving supplemental oxygen therapy", "Pneumonia in clients intubated and ventilated at the time of, or within 48 hours before, the onset", "Pneumonia that develops at any point after a client has been extubated", "Pneumonia caused by an organism resistant to the usual antibiotics"], "a": [1], "r": "VAP is defined as pneumonia that occurs in patients who are intubated and ventilated at the time of, or within 48 hours before, the onset of the pneumonia.", "id": "s19-11"}, {"s": 19, "t": "sata", "q": "Which are signs and symptoms of ventilator-associated pneumonia? Select all that apply.", "o": ["Increased respiratory rate", "Yellow or green sputum", "Possible blood in the sputum", "Crackles upon auscultation", "Fever", "Watery diarrhea"], "a": [0, 1, 2, 3, 4], "r": "The signs and symptoms of VAP are an increased respiratory rate, yellow or green sputum, possible blood in sputum, crackles upon auscultation, and fever.", "id": "s19-12"}];
+const TITLES = {"1": "What Is an Infection", "2": "Related Concepts", "3": "Terminology", "4": "Microorganisms That Cause Infection", "5": "Acute and Chronic Infections", "6": "Local and Systemic Infections, and Sepsis", "7": "The Body's Defenses", "8": "Health Promotion", "9": "Lifespan Considerations", "10": "Infection Prevention in Healthcare", "11": "Isolation Precautions", "12": "Stages of the Infectious Process", "13": "Antipyretics and Assessment Cues", "14": "Diagnostic Tests", "15": "Asepsis", "16": "Antibiotic Resistance", "17": "Urinary Tract Infection", "18": "Cellulitis", "19": "Healthcare-Associated Infections"};
+const GROUPS = [{"name": "What infection is, and what causes it", "slides": [1, 2, 3, 4]}, {"name": "Types of infection and the body's defenses", "slides": [5, 6, 7]}, {"name": "Prevention, promotion and precautions", "slides": [8, 9, 10, 11]}, {"name": "Assessment and diagnosis", "slides": [12, 13, 14]}, {"name": "Asepsis and antibiotic resistance", "slides": [15, 16]}, {"name": "Specific infections and HAIs", "slides": [17, 18, 19]}];
+const SECTION_LABEL = {"1": "Slide 3", "2": "Slide 4", "3": "Slide 5", "4": "Slide 6", "5": "Slide 7", "6": "Slide 8", "7": "Slide 10", "8": "Slide 11", "9": "Slide 12", "10": "Slide 14", "11": "Slide 15", "12": "Slide 17", "13": "Slides 21-22", "14": "Slides 23-24", "15": "Slide 26", "16": "Slide 27", "17": "Slide 29", "18": "Slide 30", "19": "Slides 31-32"};
+const CHAIN = [["1. Etiologic agent", "The pathogen itself: the bacteria, virus, fungus or parasite causing the infection."], ["2. Reservoir", "Where the pathogen is housed. Humans, plants, animals, the environment, food, water and feces. A human is the reservoir for influenza, mosquitos for West Nile, water for Vibrio cholerae, and the intestines for E. coli."], ["3. Portal of exit", "How the microorganism leaves the reservoir: the nose or mouth through coughing and sneezing, the vagina through discharge, or drainage from a wound or cut."], ["4. Mode of transmission", "How the pathogen travels to the next host. There are three: direct, indirect (vehicle borne or vector borne) and airborne."], ["5. Portal of entry", "How the pathogen gets into the next person: a break in the skin, the nose, mouth, ears, eyes or genitalia."], ["6. Susceptible host", "Any individual at risk for infection. Infants and young children are often susceptible hosts because of their undeveloped immune system; simply being present while someone sneezes makes a person a susceptible host."], ["Direct transmission", "Immediate and direct transfer from one person to another: touching, kissing, biting, sexual intercourse. Droplet spread counts as direct if a person within 3 feet sneezes, coughs, spits, talks or sings and the droplet lands in another's eye, nose or mouth."], ["Indirect transmission", "Transfer through something in between. It is either vehicle borne or vector borne."], ["Vehicle borne transmission", "A vehicle is any substance that serves as an intermediate source of transport into a susceptible host: fomites (inanimate objects such as clothes, toys and utensils), blood, plasma, water and food. Example: food contaminated with E. coli because the chef did not wash their hands."], ["Vector borne transmission", "An animal or insect serves as the intermediate means of transport. Example: a tick bites an infected mouse (the reservoir), and the tick then becomes the vector that transmits Lyme disease to the next animal or human it bites."], ["Airborne transmission", "Involves droplets or dust particles travelling on air currents."], ["Droplet nuclei", "The residue of evaporated droplets emitted by an infected host, which can remain in the air for a long time. Tuberculosis (TB) is the example."], ["Dust", "Can contain spores from infectious agents and be transmitted through air currents."]];
+const DRUGS = [["Antibiotics", "For bacterial infections. Used prophylactically to prevent infection or to treat an existing one, chosen from culture results and sensitivity. Examples: penicillin G, cefazolin, ciprofloxacin, vancomycin, metronidazole."], ["Antibiotic nursing considerations", "Monitor for allergic reaction (change in vital signs, breathing difficulty, hives). Assess renal and hepatic function, because antibiotics are metabolized through the liver and excreted through the urinary system. Teach the patient to take the entire prescribed amount."], ["Antivirals", "For viral infections. A very large category, with each subgroup having its own side effects. Examples: acyclovir, valacyclovir."], ["Antifungals", "For fungal infections, meaning yeasts and molds. Examples: fluconazole, nystatin, micafungin."], ["Antifungal nursing considerations", "Monitor renal and hepatic function, because antifungals can be hepatotoxic. Monitor kidney function closely (intake and output, BUN, creatinine, daily weights), as 80% of patients experience nephrotoxic side effects."], ["Antiprotozoals", "Used to kill parasites with flagella and cilia, as well as ameba. Example: metronidazole."], ["Antimalarials", "Used to kill the parasitic protozoa that cause malaria. Example: chloroquine."], ["Anthelmintics", "Used to kill parasitic worms. Example: albendazole."], ["Broad spectrum antibiotic", "An antibiotic a wide variety of bacteria are sensitive to. It may be started while culture and sensitivity results are pending, when the signs and symptoms point toward a bacterial infection."], ["Sensitivity testing", "After an organism is cultured it is exposed to various antibiotics to determine which is likely to be most effective. It takes 24 to 48 hours to grow the organism, so obtain specimens before starting therapy, because antibiotics alter the ability to culture it."]];
+const TYPE_LABEL = {mc:"Multiple choice", sata:"Select all that apply", match:"Matching", grid:"Matrix grid"};
+const LETTERS = "ABCDEFGHIJ";
+const KEY_SEEN = "infectionTB.seen.v1";
+const KEY_MISSED = "infectionTB.missed.v1";
+const KEY_RUNS = "infectionTB.runs.v1";
+
+/* ---------------- storage (best effort) ---------------- */
+function load(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function save(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+}
+let seen = new Set(load(KEY_SEEN, []));
+let missed = new Set(load(KEY_MISSED, []));
+let runs = load(KEY_RUNS, []);
+function persist(){
+  save(KEY_SEEN, [...seen]); save(KEY_MISSED, [...missed]); save(KEY_RUNS, runs.slice(-40));
+}
+
+/* ---------------- helpers ---------------- */
+function el(tag, cls, txt){
+  const n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(txt !== undefined) n.textContent = txt;
+  return n;
+}
+function shuffle(a){
+  a = [...a];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function byId(id){ return QUESTIONS.find(q => q.id === id); }
+function plural(n, w){ return n + " " + w + (n === 1 ? "" : "s"); }
+function mmss(ms){
+  const s = Math.floor(ms/1000);
+  return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+}
+
+/* ---------------- question rendering ---------------- */
+/* mode: "study" = check button + instant rationale; "exam" = collect only; "review" = show result */
+function renderQuestion(q, opts){
+  const o = opts || {};
+  const card = el("article","q");
+  card.dataset.type = q.t;
+
+  const head = el("div","qhead");
+  if(o.label !== undefined) head.appendChild(el("span","qnum", o.label));
+  head.appendChild(el("span","qtype", TYPE_LABEL[q.t]));
+  if(o.showSlide) head.appendChild(el("span","qslide","Slide " + q.s));
+  card.appendChild(head);
+  card.appendChild(el("p","stem", q.q));
+
+  const state = o.state || {};          // {picked:[origIdx...], order:[...], match:{}}
+  if(!state.order) state.order = q.t === "grid" ? [...Array(q.rows.length).keys()]
+    : shuffle([...Array(q.t === "match" ? q.p.length : q.o.length).keys()]);
+
+  if(q.t === "match") buildMatch(card, q, state, o);
+  else if(q.t === "grid") buildGrid(card, q, state, o);
+  else buildChoice(card, q, state, o);
+
+  if(o.mode === "review"){
+    const gotIt = isCorrect(q, state);
+    const line = q.t === "match" ? "Correct matches are shown beside each item."
+      : q.t === "grid" ? "The correct boxes are ticked below."
+      : "Answer: " + answerLetters(q, state).join(", ") + ".";
+    const r = el("div","rat");
+    r.appendChild(el("span","ans", (state.picked === undefined && !state.match ? "Skipped. " : (gotIt ? "Correct. " : "Not quite. ")) + line));
+    if(q.r) r.appendChild(document.createTextNode(q.r));
+    card.appendChild(r);
+    if(q.f){
+      const n = el("div","note");
+      n.appendChild(el("span","t","Instructor update. "));
+      n.appendChild(document.createTextNode(q.f));
+      card.appendChild(n);
+    }
+  }
+  return card;
+}
+
+function answerLetters(q, state){
+  if(q.t === "match") return state.order.map((_, i) => LETTERS[i]);
+  if(q.t === "grid") return [];
+  const ans = new Set(q.a);
+  return state.order.map((orig, pos) => ans.has(orig) ? LETTERS[pos] : null)
+                    .filter(Boolean).sort();
+}
+
+function isCorrect(q, state){
+  if(q.t === "grid"){
+    const got = state.grid || {};
+    return q.rows.every((_, r) => {
+      const want = new Set(q.a[r]);
+      const have = new Set(got[r] || []);
+      if(want.size !== have.size) return false;
+      for(const c of want) if(!have.has(c)) return false;
+      return true;
+    });
+  }
+  if(q.t === "match"){
+    return q.p.every((_, idx) => (state.match || {})[idx] === LETTERS[state.order.indexOf(idx)]);
+  }
+  const picked = new Set(state.picked || []);
+  const ans = new Set(q.a);
+  if(picked.size !== ans.size) return false;
+  for(const a of ans) if(!picked.has(a)) return false;
+  return true;
+}
+
+function buildChoice(card, q, state, o){
+  const multi = q.t === "sata";
+  if(!state.picked) state.picked = [];
+  const picked = new Set(state.picked);
+  const list = el("ul","opts");
+  const buttons = [];
+  const locked = o.mode === "review";
+
+  state.order.forEach((orig, pos) => {
+    const li = el("li");
+    const b = el("button","opt" + (multi ? "" : " round"));
+    b.type = "button";
+    b.setAttribute("aria-pressed", picked.has(orig) ? "true" : "false");
+    b.appendChild(el("span","box", LETTERS[pos]));
+    b.appendChild(el("span","txt", q.o[orig]));
+    b.dataset.orig = orig;
+    if(locked) b.disabled = true;
+    else b.addEventListener("click", () => {
+      if(!multi){ buttons.forEach(x => x.setAttribute("aria-pressed","false")); picked.clear(); }
+      const on = b.getAttribute("aria-pressed") === "true";
+      b.setAttribute("aria-pressed", on ? "false" : "true");
+      if(on) picked.delete(orig); else picked.add(orig);
+      state.picked = [...picked];
+      if(o.onChange) o.onChange();
+    });
+    buttons.push(b);
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+  card.appendChild(list);
+
+  if(locked){
+    const ans = new Set(q.a);
+    buttons.forEach(b => {
+      const i = Number(b.dataset.orig);
+      const chosen = picked.has(i);
+      b.setAttribute("aria-pressed","false");
+      if(ans.has(i) && chosen) b.classList.add("correct");
+      else if(ans.has(i)) b.classList.add("missed");
+      else if(chosen) b.classList.add("incorrect");
+    });
+    return;
+  }
+
+  if(o.mode === "study"){
+    const btn = el("button","btn small", multi ? "Check answers" : "Check answer");
+    btn.type = "button";
+    card.appendChild(btn);
+    btn.addEventListener("click", () => {
+      if(btn.disabled || picked.size === 0) return;
+      btn.disabled = true; btn.textContent = "Answer shown"; btn.classList.add("ghost");
+      const ans = new Set(q.a);
+      buttons.forEach(b => {
+        const i = Number(b.dataset.orig);
+        const chosen = picked.has(i);
+        b.disabled = true; b.setAttribute("aria-pressed","false");
+        if(ans.has(i) && chosen) b.classList.add("correct");
+        else if(ans.has(i)) b.classList.add("missed");
+        else if(chosen) b.classList.add("incorrect");
+      });
+      finishStudy(card, q, state);
+    });
+  }
+}
+
+
+function buildGrid(card, q, state, o){
+  if(!state.grid) state.grid = {};
+  const locked = o.mode === "review";
+  const wrap = el("div","gridwrap");
+  const tbl = el("table","matrix");
+
+  const thead = el("thead");
+  const hr = el("tr");
+  hr.appendChild(el("th", null, q.rowHead || "Client finding"));
+  q.cols.forEach(c => hr.appendChild(el("th","col", c)));
+  thead.appendChild(hr);
+  tbl.appendChild(thead);
+
+  const tbody = el("tbody");
+  const cells = [];
+  q.rows.forEach((label, r) => {
+    const tr = el("tr");
+    tr.appendChild(el("td","rowlab", label));
+    q.cols.forEach((cname, c) => {
+      const td = el("td","cell");
+      const box = el("button","gbox");
+      box.type = "button";
+      box.dataset.row = String(r);
+      box.dataset.col = String(c);
+      box.setAttribute("aria-label", label + ": " + cname);
+      box.setAttribute("aria-pressed", "false");
+      const on = (state.grid[r] || []).includes(c);
+      if(on){ box.classList.add("on"); box.setAttribute("aria-pressed","true"); box.textContent = "✕"; }
+      if(locked) box.disabled = true;
+      else box.addEventListener("click", () => {
+        if(box.disabled) return;
+        const list = new Set(state.grid[r] || []);
+        if(list.has(c)) list.delete(c); else list.add(c);
+        state.grid[r] = [...list];
+        const nowOn = list.has(c);
+        box.classList.toggle("on", nowOn);
+        box.setAttribute("aria-pressed", String(nowOn));
+        box.textContent = nowOn ? "✕" : "";
+        if(o.onChange) o.onChange();
+      });
+      td.appendChild(box);
+      tr.appendChild(td);
+      cells.push({box, r, c});
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  card.appendChild(wrap);
+
+  function mark(){
+    cells.forEach(({box, r, c}) => {
+      box.disabled = true;
+      const want = (q.a[r] || []).includes(c);
+      const got = (state.grid[r] || []).includes(c);
+      if(want && got) box.classList.add("correct");
+      else if(want){ box.classList.add("missed"); box.textContent = "✕"; }
+      else if(got) box.classList.add("incorrect");
+    });
+  }
+  if(locked){ mark(); return; }
+
+  if(o.mode === "study"){
+    const btn = el("button","btn small","Check the grid");
+    btn.type = "button";
+    card.appendChild(btn);
+    btn.addEventListener("click", () => {
+      if(btn.disabled) return;
+      if(!Object.values(state.grid).some(v => v && v.length)) return;
+      btn.disabled = true; btn.textContent = "Answer shown"; btn.classList.add("ghost");
+      mark();
+      finishStudy(card, q, state);
+    });
+  }
+}
+
+function buildMatch(card, q, state, o){
+  if(!state.match) state.match = {};
+  const locked = o.mode === "review";
+  const bank = el("div","bank");
+  bank.appendChild(el("div","lbl","Answer bank"));
+  const ol = el("ol"); ol.type = "A";
+  state.order.forEach(i => ol.appendChild(el("li", null, q.p[i][1])));
+  bank.appendChild(ol);
+  card.appendChild(bank);
+
+  const rows = [];
+  const holder = el("div","pairs");
+  q.p.forEach((pair, idx) => {
+    const row = el("div","pair");
+    row.appendChild(el("span","prompt", (idx+1) + ". " + pair[0]));
+    const sel = el("select");
+    sel.setAttribute("aria-label","Match for " + pair[0]);
+    const ph = el("option", null, "—"); ph.value = "";
+    sel.appendChild(ph);
+    state.order.forEach((_, pos) => {
+      const op = el("option", null, LETTERS[pos]); op.value = LETTERS[pos];
+      sel.appendChild(op);
+    });
+    sel.value = state.match[idx] || "";
+    const verdict = el("span","verdict","");
+    if(locked) sel.disabled = true;
+    else sel.addEventListener("change", () => {
+      state.match[idx] = sel.value;
+      if(o.onChange) o.onChange();
+    });
+    row.appendChild(sel); row.appendChild(verdict);
+    holder.appendChild(row);
+    rows.push({row, sel, verdict, correctLetter: LETTERS[state.order.indexOf(idx)]});
+  });
+  card.appendChild(holder);
+
+  function mark(){
+    rows.forEach(r => {
+      r.sel.disabled = true;
+      if(r.sel.value === r.correctLetter){ r.row.classList.add("ok"); r.verdict.textContent = r.correctLetter; }
+      else { r.row.classList.add("no"); r.verdict.textContent = "→ " + r.correctLetter; }
+    });
+  }
+  if(locked){ mark(); return; }
+
+  if(o.mode === "study"){
+    const btn = el("button","btn small","Check matches");
+    btn.type = "button";
+    card.appendChild(btn);
+    btn.addEventListener("click", () => {
+      if(btn.disabled) return;
+      if(rows.every(r => r.sel.value === "")) return;
+      btn.disabled = true; btn.textContent = "Answer shown"; btn.classList.add("ghost");
+      mark();
+      finishStudy(card, q, state);
+    });
+  }
+}
+
+/* study-mode instant feedback */
+let studyAnswered = 0, studyCorrect = 0;
+function finishStudy(card, q, state){
+  const gotIt = isCorrect(q, state);
+  const line = q.t === "match" ? "Correct matches are shown beside each item."
+    : q.t === "grid" ? "The correct boxes are ticked below."
+    : "Answer: " + answerLetters(q, state).join(", ") + ".";
+  const r = el("div","rat");
+  r.appendChild(el("span","ans", (gotIt ? "Correct. " : "Not quite. ") + line));
+  if(q.r) r.appendChild(document.createTextNode(q.r));
+  card.appendChild(r);
+  if(q.f){
+    const n = el("div","note");
+    n.appendChild(el("span","t","Instructor update. "));
+    n.appendChild(document.createTextNode(q.f));
+    card.appendChild(n);
+  }
+  seen.add(q.id);
+  if(gotIt) missed.delete(q.id); else missed.add(q.id);
+  persist();
+  studyAnswered++; if(gotIt) studyCorrect++;
+  const t = document.getElementById("studyTally");
+  if(t) t.innerHTML = "Answered <b>"+studyAnswered+"</b> — <b>"+studyCorrect+"</b> correct";
+}
+
+/* ---------------- STUDY MODE ---------------- */
+function viewStudy(){
+  const app = document.getElementById("app");
+  app.textContent = "";
+  studyAnswered = 0; studyCorrect = 0;
+
+  const bar = el("div","toolbar");
+  const lab = el("label", null, "Jump to"); lab.setAttribute("for","jump");
+  const jump = el("select","jump"); jump.id = "jump";
+  const allOpt = el("option", null, "All slides"); allOpt.value = "top";
+  jump.appendChild(allOpt);
+  bar.appendChild(lab); bar.appendChild(jump);
+
+  const chips = el("div","chips");
+  [["all","All"],["mc","Multiple choice"],["sata","Select all"],["match","Matching"],["grid","Matrix grid"]].forEach(([f,t],i) => {
+    const c = el("button","chip",t);
+    c.dataset.filter = f;
+    c.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    chips.appendChild(c);
+  });
+  bar.appendChild(chips);
+  const tally = el("div","tally"); tally.id = "studyTally";
+  tally.innerHTML = "Answered <b>0</b> — <b>0</b> correct";
+  bar.appendChild(tally);
+  app.appendChild(bar);
+
+  const bySlide = new Map();
+  QUESTIONS.forEach(q => { if(!bySlide.has(q.s)) bySlide.set(q.s, []); bySlide.get(q.s).push(q); });
+
+  let n = 0;
+  [...bySlide.keys()].sort((a,b)=>a-b).forEach(slide => {
+    const sec = el("section","slide");
+    sec.id = "slide-" + slide;
+    sec.appendChild(el("h2", null, TITLES[slide] || ("Slide " + slide)));
+    const items = bySlide.get(slide);
+    sec.appendChild(el("p","meta",(SECTION_LABEL[slide] || ("Slide " + slide)) + " · " + plural(items.length,"question")));
+    items.forEach(q => { n++; sec.appendChild(renderQuestion(q, {mode:"study", label:String(n)})); });
+    app.appendChild(sec);
+    const op = el("option", null, "Slide " + slide + " — " + (TITLES[slide] || ""));
+    op.value = sec.id;
+    jump.appendChild(op);
+  });
+
+  jump.addEventListener("change", () => {
+    if(jump.value === "top"){ window.scrollTo({top:0,behavior:"smooth"}); return; }
+    const t = document.getElementById(jump.value);
+    if(t) t.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+  chips.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const f = chip.dataset.filter;
+      chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === chip)));
+      app.querySelectorAll("article.q").forEach(c =>
+        c.classList.toggle("hidden", f !== "all" && c.dataset.type !== f));
+      app.querySelectorAll("section.slide").forEach(sec => {
+        const vis = [...sec.querySelectorAll("article.q")].some(c => !c.classList.contains("hidden"));
+        sec.classList.toggle("hidden", !vis);
+      });
+    });
+  });
+}
+
+/* ---------------- EXAM SETUP ---------------- */
+const setup = {
+  scope: "all",        // "all" | "unit" | "slide" | "missed"
+  unit: 0,             // index into GROUPS when scope === "unit"
+  slide: null,         // slide number when scope === "slide"
+  types: new Set(["mc","sata","match","grid"]),
+  limit: 25,
+  fresh: true
+};
+const ALL_SLIDES = [...new Set(QUESTIONS.map(q => q.s))].sort((a,b) => a-b);
+
+function poolFor(s){
+  let pool = QUESTIONS.filter(q => s.types.has(q.t));
+  if(s.scope === "missed") return pool.filter(q => missed.has(q.id));
+  if(s.scope === "unit"){
+    const g = GROUPS[s.unit] || {slides:[]};
+    return pool.filter(q => g.slides.includes(q.s));
+  }
+  if(s.scope === "slide") return pool.filter(q => q.s === s.slide);
+  return pool;
+}
+
+function viewExamSetup(){
+  const app = document.getElementById("app");
+  app.textContent = "";
+
+  const panel = el("div","panel");
+  panel.appendChild(el("h2", null, "Take a practice exam"));
+  panel.appendChild(el("p","sub","Two quick choices and you're in. Questions and answer choices come up in a different order every time, and you'll get ones you haven't seen before you get any repeats."));
+
+  /* --- 1. what to practice --- */
+  const f1 = el("div","field");
+  f1.appendChild(el("div","h","1. What do you want to practice?"));
+  const choices = el("div","choices");
+
+  function choice(scope, title, sub, disabled){
+    const b = el("button","choice");
+    b.type = "button";
+    b.dataset.scope = scope;
+    b.setAttribute("aria-pressed", String(setup.scope === scope));
+    b.appendChild(el("span","dot"));
+    const w = el("span");
+    w.appendChild(el("span","t", title));
+    if(sub) w.appendChild(el("span","s", sub));
+    b.appendChild(w);
+    if(disabled) b.disabled = true;
+    return b;
+  }
+
+  choices.appendChild(choice("all","Everything",
+    ALL_SLIDES.length + " topics · " + QUESTIONS.length + " questions"));
+  choices.appendChild(choice("unit","One unit",
+    "A group of related topics, like injections or medication errors"));
+  choices.appendChild(choice("slide","One topic",
+    "A single slide you want to hammer"));
+  choices.appendChild(choice("missed","Only what I've gotten wrong",
+    missed.size ? plural(missed.size,"question") + " to clean up"
+                : "Nothing yet — this fills up as you answer questions",
+    missed.size === 0));
+  f1.appendChild(choices);
+
+  /* dropdown that appears under the unit / topic choices */
+  const picker = el("div","picker");
+  const sel = el("select");
+  sel.id = "scopePicker";
+  picker.appendChild(sel);
+  f1.appendChild(picker);
+  panel.appendChild(f1);
+
+  /* --- 2. how long --- */
+  const f2 = el("div","field");
+  f2.appendChild(el("div","h","2. How many questions?"));
+  const sizes = el("div","sizes");
+  [[10,"Quick check"],[25,"Standard"],[50,"Long"],["all","Everything"]].forEach(([v,lab]) => {
+    const b = el("button","size");
+    b.type = "button";
+    b.dataset.limit = v;
+    b.setAttribute("aria-pressed", String(setup.limit === v));
+    b.appendChild(el("span","t", v === "all" ? "All" : String(v)));
+    b.appendChild(el("span","s", lab));
+    sizes.appendChild(b);
+  });
+  f2.appendChild(sizes);
+  panel.appendChild(f2);
+
+  /* --- start --- */
+  const bar = el("div","startbar");
+  const start = el("button","btn","Start exam");
+  bar.appendChild(start);
+  const info = el("div","poolinfo");
+  bar.appendChild(info);
+  const warnBox = el("div","warn hidden");
+  bar.appendChild(warnBox);
+  panel.appendChild(bar);
+
+  /* --- collapsed extras --- */
+  const more = el("details","more");
+  const sum = document.createElement("summary");
+  sum.textContent = "More options";
+  more.appendChild(sum);
+  const fT = el("div","field");
+  fT.appendChild(el("div","d","Question formats to include:"));
+  [["mc","Multiple choice"],["sata","Select all that apply"],["match","Matching"]].forEach(([v,t]) => {
+    const l = el("label","cb");
+    const cb = el("input"); cb.type = "checkbox"; cb.dataset.type = v;
+    cb.checked = setup.types.has(v);
+    l.appendChild(cb); l.appendChild(el("span", null, t));
+    fT.appendChild(l);
+  });
+  const lf = el("label","cb");
+  const cbF = el("input"); cbF.type = "checkbox"; cbF.checked = !setup.fresh;
+  cbF.id = "repeatCb";
+  lf.appendChild(cbF);
+  lf.appendChild(el("span", null, "Let questions I've already seen come up again"));
+  fT.appendChild(lf);
+  more.appendChild(fT);
+  panel.appendChild(more);
+
+  app.appendChild(panel);
+
+  /* ----- wiring ----- */
+  function fillPicker(){
+    sel.textContent = "";
+    if(setup.scope === "unit"){
+      GROUPS.forEach((g, i) => {
+        const n = QUESTIONS.filter(q => g.slides.includes(q.s)).length;
+        const o = el("option", null, g.name + " (" + n + ")");
+        o.value = String(i);
+        sel.appendChild(o);
+      });
+      sel.value = String(setup.unit);
+    } else if(setup.scope === "slide"){
+      ALL_SLIDES.forEach(s => {
+        const n = QUESTIONS.filter(q => q.s === s).length;
+        const o = el("option", null, (TITLES[s] || ("Slide " + s)) + "  (" + n + " questions)");
+        o.value = String(s);
+        sel.appendChild(o);
+      });
+      if(setup.slide === null) setup.slide = ALL_SLIDES[0];
+      sel.value = String(setup.slide);
+    }
+    picker.classList.toggle("hidden", setup.scope !== "unit" && setup.scope !== "slide");
+  }
+
+  function refresh(){
+    const pool = poolFor(setup);
+    const unseen = pool.filter(q => !seen.has(q.id)).length;
+    const want = setup.limit === "all" ? pool.length : Math.min(setup.limit, pool.length);
+    info.innerHTML = "This exam will be <b>" + want + "</b> question" + (want === 1 ? "" : "s") +
+      ", drawn from " + pool.length + " available.";
+    start.disabled = pool.length === 0;
+    let msg = "";
+    if(pool.length === 0){
+      msg = "Nothing matches these settings. Check the question formats under More options.";
+    } else if(setup.fresh && unseen < want){
+      const rep = want - unseen;
+      msg = "You've already worked through most of this set, so " + rep + " question" +
+        (rep === 1 ? "" : "s") + " will come up again. Pick a wider set, or clear your history at the bottom of the page to start fresh.";
+    }
+    warnBox.textContent = msg;
+    warnBox.classList.toggle("hidden", !msg);
+  }
+
+  choices.addEventListener("click", e => {
+    const b = e.target.closest("[data-scope]");
+    if(!b || b.disabled) return;
+    setup.scope = b.dataset.scope;
+    choices.querySelectorAll("[data-scope]").forEach(c =>
+      c.setAttribute("aria-pressed", String(c === b)));
+    fillPicker(); refresh();
+  });
+  sel.addEventListener("change", () => {
+    if(setup.scope === "unit") setup.unit = Number(sel.value);
+    else if(setup.scope === "slide") setup.slide = Number(sel.value);
+    refresh();
+  });
+  sizes.addEventListener("click", e => {
+    const b = e.target.closest("[data-limit]");
+    if(!b) return;
+    setup.limit = b.dataset.limit === "all" ? "all" : Number(b.dataset.limit);
+    sizes.querySelectorAll("[data-limit]").forEach(c =>
+      c.setAttribute("aria-pressed", String(c === b)));
+    refresh();
+  });
+  more.addEventListener("change", e => {
+    const cb = e.target.closest("input");
+    if(!cb) return;
+    if(cb.dataset.type){
+      if(cb.checked) setup.types.add(cb.dataset.type); else setup.types.delete(cb.dataset.type);
+    } else {
+      setup.fresh = !cb.checked;
+    }
+    refresh();
+  });
+  start.addEventListener("click", () => startExam());
+
+  fillPicker();
+  refresh();
+}
+
+/* ---------------- EXAM RUNNER ---------------- */
+let exam = null;
+
+function startExam(){
+  const pool = poolFor(setup);
+  if(!pool.length) return;
+  const want = setup.limit === "all" ? pool.length : Math.min(setup.limit, pool.length);
+
+  let chosen;
+  if(setup.fresh){
+    const unseen = shuffle(pool.filter(q => !seen.has(q.id)));
+    const rest = shuffle(pool.filter(q => seen.has(q.id)));
+    chosen = unseen.concat(rest).slice(0, want);
+    chosen = shuffle(chosen);
+  } else {
+    chosen = shuffle(pool).slice(0, want);
+  }
+
+  exam = {
+    items: chosen.map(q => ({ id: q.id, state: {}, flagged: false })),
+    i: 0,
+    started: Date.now(),
+    submitted: false
+  };
+  viewExam();
+}
+
+function examAnsweredCount(){
+  return exam.items.filter(it => {
+    const q = byId(it.id);
+    if(q.t === "grid") return Object.values(it.state.grid || {}).some(v => v && v.length);
+    if(q.t === "match") return Object.values(it.state.match || {}).some(v => v);
+    return (it.state.picked || []).length > 0;
+  }).length;
+}
+
+function viewExam(){
+  const app = document.getElementById("app");
+  app.textContent = "";
+
+  const top = el("div","examtop");
+  const pos = el("div","pos"); pos.id = "examPos";
+  const prog = el("div","prog"); const fill = el("i"); prog.appendChild(fill);
+  const timer = el("div","timer"); timer.id = "examTimer";
+  const quit = el("button","btn ghost small","End exam");
+  top.appendChild(pos); top.appendChild(prog); top.appendChild(timer); top.appendChild(quit);
+  app.appendChild(top);
+
+  const holder = el("div"); holder.id = "examHolder";
+  app.appendChild(holder);
+
+  const grid = el("div","navgrid"); grid.id = "examGrid";
+  app.appendChild(grid);
+
+  quit.addEventListener("click", () => submitExam());
+
+  const tick = setInterval(() => {
+    const t = document.getElementById("examTimer");
+    if(!t || !exam || exam.submitted){ clearInterval(tick); return; }
+    t.textContent = mmss(Date.now() - exam.started);
+  }, 1000);
+
+  drawExamGrid();
+  drawExamQuestion();
+
+  function drawExamGrid(){
+    grid.textContent = "";
+    exam.items.forEach((it, idx) => {
+      const b = el("button","navbtn", String(idx+1));
+      const q = byId(it.id);
+      const done = q.t === "grid"
+        ? Object.values(it.state.grid || {}).some(v => v && v.length)
+        : q.t === "match"
+        ? Object.values(it.state.match || {}).some(v => v)
+        : (it.state.picked || []).length > 0;
+      if(done) b.classList.add("done");
+      if(it.flagged) b.classList.add("flag");
+      if(idx === exam.i) b.classList.add("here");
+      b.addEventListener("click", () => { exam.i = idx; drawExamQuestion(); drawExamGrid(); });
+      grid.appendChild(b);
+    });
+  }
+
+  function drawExamQuestion(){
+    const it = exam.items[exam.i];
+    const q = byId(it.id);
+    holder.textContent = "";
+    holder.appendChild(renderQuestion(q, {
+      mode: "exam",
+      label: String(exam.i + 1),
+      showSlide: false,
+      state: it.state,
+      onChange: () => { drawExamGrid(); updateHead(); }
+    }));
+
+    const nav = el("div","runnav");
+    const prev = el("button","btn ghost","Previous");
+    prev.disabled = exam.i === 0;
+    prev.addEventListener("click", () => { exam.i--; drawExamQuestion(); drawExamGrid(); });
+    const flagBtn = el("button","btn ghost", it.flagged ? "Unflag" : "Flag for review");
+    flagBtn.addEventListener("click", () => {
+      it.flagged = !it.flagged; drawExamQuestion(); drawExamGrid();
+    });
+    nav.appendChild(prev); nav.appendChild(flagBtn);
+    const sp = el("span","sp");
+    nav.appendChild(sp);
+    if(exam.i < exam.items.length - 1){
+      const next = el("button","btn","Next");
+      next.addEventListener("click", () => { exam.i++; drawExamQuestion(); drawExamGrid(); });
+      nav.appendChild(next);
+    } else {
+      const sub = el("button","btn","Submit exam");
+      sub.addEventListener("click", () => submitExam());
+      nav.appendChild(sub);
+    }
+    holder.appendChild(nav);
+    updateHead();
+  }
+
+  function updateHead(){
+    const done = examAnsweredCount();
+    document.getElementById("examPos").textContent =
+      "Question " + (exam.i + 1) + " of " + exam.items.length;
+    fill.style.width = (100 * done / exam.items.length) + "%";
+  }
+}
+
+function submitExam(){
+  const unanswered = exam.items.length - examAnsweredCount();
+  if(unanswered > 0 && !exam.submitted){
+    if(!confirm(unanswered + " question" + (unanswered===1?" is":"s are") +
+        " still unanswered. Submit anyway?")) return;
+  }
+  exam.submitted = true;
+  exam.elapsed = Date.now() - exam.started;
+
+  exam.items.forEach(it => {
+    const q = byId(it.id);
+    it.correct = isCorrect(q, it.state);
+    seen.add(q.id);
+    if(it.correct) missed.delete(q.id); else missed.add(q.id);
+  });
+  const right = exam.items.filter(it => it.correct).length;
+  runs.push({ when: Date.now(), n: exam.items.length, right, ms: exam.elapsed });
+  persist();
+  viewResults();
+}
+
+/* ---------------- RESULTS ---------------- */
+function viewResults(){
+  const app = document.getElementById("app");
+  app.textContent = "";
+  const right = exam.items.filter(it => it.correct).length;
+  const n = exam.items.length;
+  const pct = Math.round(100 * right / n);
+
+  const panel = el("div","panel");
+  panel.appendChild(el("div","scorebig", pct + "%"));
+  panel.appendChild(el("div","scoresub",
+    right + " of " + n + " correct · " + mmss(exam.elapsed) + " elapsed"));
+
+  /* breakdown by slide */
+  const bySlide = new Map();
+  exam.items.forEach(it => {
+    const q = byId(it.id);
+    if(!bySlide.has(q.s)) bySlide.set(q.s, {n:0, r:0});
+    const b = bySlide.get(q.s); b.n++; if(it.correct) b.r++;
+  });
+  const weak = [...bySlide.entries()].filter(([,b]) => b.r < b.n).sort((a,b) =>
+    (a[1].r/a[1].n) - (b[1].r/b[1].n));
+
+  if(weak.length){
+    panel.appendChild(el("div","h","Where to focus next"));
+    const scroll = el("div","scroll");
+    const tb = el("table","bd");
+    const hr = el("tr");
+    ["Slide","Score"].forEach((h,i) => {
+      const th = el("th", i ? "num" : null, h); hr.appendChild(th);
+    });
+    const thead = document.createElement("thead"); thead.appendChild(hr); tb.appendChild(thead);
+    const tbody = document.createElement("tbody");
+    weak.forEach(([s,b]) => {
+      const tr = el("tr");
+      tr.appendChild(el("td", null, s + " — " + (TITLES[s] || "")));
+      tr.appendChild(el("td","num", b.r + "/" + b.n));
+      tbody.appendChild(tr);
+    });
+    tb.appendChild(tbody);
+    scroll.appendChild(tb);
+    panel.appendChild(scroll);
+  } else {
+    panel.appendChild(el("p","sub","Clean sweep — nothing missed on this one."));
+  }
+
+  const bar = el("div","poolbar");
+  const again = el("button","btn","Build another exam");
+  again.addEventListener("click", () => setMode("exam"));
+  bar.appendChild(again);
+  const retry = el("button","btn ghost","Retake the ones I missed");
+  retry.disabled = right === n;
+  retry.addEventListener("click", () => {
+    const ids = exam.items.filter(it => !it.correct).map(it => it.id);
+    exam = { items: shuffle(ids).map(id => ({id, state:{}, flagged:false})),
+             i:0, started:Date.now(), submitted:false };
+    viewExam();
+    window.scrollTo({top:0});
+  });
+  bar.appendChild(retry);
+  panel.appendChild(bar);
+  app.appendChild(panel);
+
+  /* full review */
+  app.appendChild(el("h2", null, "Review every question"));
+  const note = el("p","sub","Your answer is marked; the correct answer is outlined in green.");
+  note.style.marginBottom = "1.1rem";
+  app.appendChild(note);
+  exam.items.forEach((it, idx) => {
+    const q = byId(it.id);
+    app.appendChild(renderQuestion(q, {
+      mode: "review", label: String(idx+1), showSlide: true, state: it.state
+    }));
+  });
+}
+
+
+/* ---------------- REFERENCE TABS (chain of infection, antimicrobials) ---------------- */
+function refView(opts){
+  const app = document.getElementById("app");
+  app.textContent = "";
+  const pairs = opts.pairs;
+
+  const head = el("section","slide");
+  head.appendChild(el("h2", null, opts.heading));
+  head.appendChild(el("p","meta", opts.label + " · " + plural(pairs.length, opts.noun)));
+  head.appendChild(el("p","lede", opts.intro));
+  app.appendChild(head);
+
+  /* ---- matching drill, five at a time ---- */
+  const drill = el("section","slide");
+  drill.appendChild(el("h2", null, "Matching drill"));
+  drill.appendChild(el("p","meta","Five at a time, reshuffled each round."));
+  const holder = el("div"); drill.appendChild(holder);
+  const again = el("button","btn small","Shuffle a new round");
+  again.type = "button";
+  again.addEventListener("click", () => { buildRound(); window.scrollTo({top:drill.offsetTop - 12}); });
+  drill.appendChild(again);
+  app.appendChild(drill);
+
+  function buildRound(){
+    holder.textContent = "";
+    const idx = shuffle([...Array(pairs.length).keys()]);
+    for(let start = 0; start < idx.length; start += 5){
+      const chunk = idx.slice(start, start + 5);
+      if(chunk.length < 2) break;
+      holder.appendChild(drillCard(chunk.map(i => pairs[i]), (start / 5) + 1));
+    }
+  }
+
+  function drillCard(set, n){
+    const card = el("article","q");
+    const h = el("div","qhead");
+    h.appendChild(el("span","qnum", "Set " + n));
+    h.appendChild(el("span","qtype","Matching"));
+    card.appendChild(h);
+    card.appendChild(el("p","stem", opts.prompt));
+
+    const order = shuffle([...Array(set.length).keys()]);
+    const bank = el("div","bank");
+    bank.appendChild(el("div","lbl","Answer bank"));
+    const ol = el("ol"); ol.type = "A";
+    order.forEach(i => ol.appendChild(el("li", null, set[i][1])));
+    bank.appendChild(ol);
+    card.appendChild(bank);
+
+    const rows = [];
+    const list = el("div","pairs");
+    set.forEach((pair, i) => {
+      const row = el("div","pair");
+      row.appendChild(el("span","prompt", (i + 1) + ". " + pair[0]));
+      const sel = el("select");
+      sel.setAttribute("aria-label","Match for " + pair[0]);
+      const ph = el("option", null, "—"); ph.value = "";
+      sel.appendChild(ph);
+      order.forEach((_, pos) => {
+        const op = el("option", null, LETTERS[pos]); op.value = LETTERS[pos];
+        sel.appendChild(op);
+      });
+      const verdict = el("span","verdict","");
+      row.appendChild(sel); row.appendChild(verdict);
+      list.appendChild(row);
+      rows.push({row, sel, verdict, want: LETTERS[order.indexOf(i)], def: pair[1]});
+    });
+    card.appendChild(list);
+
+    const btn = el("button","btn small","Check matches");
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      if(btn.disabled) return;
+      if(rows.every(r => r.sel.value === "")) return;
+      btn.disabled = true; btn.textContent = "Answer shown"; btn.classList.add("ghost");
+      let right = 0;
+      rows.forEach(r => {
+        r.sel.disabled = true;
+        if(r.sel.value === r.want){ r.row.classList.add("ok"); r.verdict.textContent = r.want; right++; }
+        else { r.row.classList.add("no"); r.verdict.textContent = "→ " + r.want; }
+      });
+      const rat = el("div","rat");
+      rat.appendChild(el("span","ans", right + " of " + rows.length + " correct. "));
+      rat.appendChild(document.createTextNode(
+        set.map(p => p[0] + " \u2014 " + p[1]).join("   ")));
+      card.appendChild(rat);
+    });
+    card.appendChild(btn);
+    return card;
+  }
+  buildRound();
+
+  /* ---- the full list ---- */
+  const glos = el("section","slide");
+  glos.appendChild(el("h2", null, opts.listHeading));
+  const bar = el("div","toolbar");
+  const lab = el("label", null, "Filter"); lab.setAttribute("for","refFilter");
+  const box = el("input"); box.id = "refFilter"; box.type = "search";
+  box.setAttribute("placeholder", opts.placeholder);
+  bar.appendChild(lab); bar.appendChild(box);
+  const toggle = el("button","chip","Hide definitions");
+  toggle.setAttribute("aria-pressed","false");
+  bar.appendChild(toggle);
+  glos.appendChild(bar);
+
+  const defs = el("div","glossary");
+  const entries = pairs.map(([term, def]) => {
+    const row = el("div","gentry");
+    row.appendChild(el("div","gterm", term));
+    const d = el("div","gdef", def);
+    row.appendChild(d);
+    defs.appendChild(row);
+    return {row, d, hay: (term + " " + def).toLowerCase()};
+  });
+  glos.appendChild(defs);
+  app.appendChild(glos);
+
+  let hidden = false;
+  toggle.addEventListener("click", () => {
+    hidden = !hidden;
+    toggle.textContent = hidden ? "Show definitions" : "Hide definitions";
+    toggle.setAttribute("aria-pressed", String(hidden));
+    entries.forEach(e => { e.d.hidden = hidden; });
+  });
+  box.addEventListener("input", () => {
+    const t = box.value.trim().toLowerCase();
+    entries.forEach(e => { e.row.hidden = t && !e.hay.includes(t); });
+  });
+}
+
+function viewTerms(){
+  refView({
+    heading: "The chain of infection",
+    label: "Slide 18",
+    noun: "entry",
+    intro: "The six links of the chain, the three modes of transmission and the examples from the speaker notes. Breaking any one link stops the spread. Drill them below, then check yourself against the full list.",
+    prompt: "Match each part of the chain to what it means.",
+    listHeading: "The whole chain",
+    placeholder: "Search a link or an example",
+    pairs: CHAIN
+  });
+}
+function viewDims(){
+  refView({
+    heading: "Antimicrobials",
+    label: "Slide 25",
+    noun: "entry",
+    intro: "Every bolded antimicrobial class with what it treats, its examples, and the nursing considerations for antibiotics and antifungals. Drill them below, then check yourself against the full list.",
+    prompt: "Match each antimicrobial class to what it treats.",
+    listHeading: "All antimicrobials",
+    placeholder: "Search a class or a drug",
+    pairs: DRUGS
+  });
+}
+
+/* ---------------- mode switching ---------------- */
+function setMode(m){
+  document.querySelectorAll(".mode").forEach(b =>
+    b.setAttribute("aria-selected", String(b.dataset.mode === m)));
+  if(m === "exam") viewExamSetup();
+  else if(m === "terms") viewTerms();
+  else if(m === "dims") viewDims();
+  else viewStudy();
+  window.scrollTo({top:0});
+}
+document.querySelectorAll(".mode").forEach(b =>
+  b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+document.getElementById("wipe").addEventListener("click", () => {
+  if(!confirm("Clear your attempted-question history and exam scores on this device?")) return;
+  seen = new Set(); missed = new Set(); runs = [];
+  persist();
+  setMode(document.querySelector('.mode[aria-selected="true"]').dataset.mode);
+});
+
+document.getElementById("total").textContent = QUESTIONS.length;
+setMode("study");
+</script>
+</body>
+</html>
